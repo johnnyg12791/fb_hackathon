@@ -28,10 +28,10 @@ using namespace cv;
 #define E_MINOR 5 //0,1 //0,3 //0,1,2,3
 
 #define C_CHORD_FILEPATH "C.wav"
-#define G_CHORD_FILEPATH "C.wav"
-#define F_CHORD_FILEPATH "C.wav"
-#define A_MINOR_FILEPATH "C.wav"
-#define E_MINOR_FILEPATH "C.wav"
+#define G_CHORD_FILEPATH "G.wav"
+#define F_CHORD_FILEPATH "F.wav"
+#define A_MINOR_FILEPATH "A.wav"
+#define E_MINOR_FILEPATH "E.wav"
 
 
 class Uke {
@@ -74,6 +74,9 @@ public:
     
     //sets up the map from keys to chords
     void InitKeyChordMap(){
+        int arr0 [4] = {0,0,0,0};
+        keysToChords[arr0] = C_CHORD;
+
         int arr [4] = {0,0,0,1};
         keysToChords[arr] = F_CHORD;
         int arr2 [4] = {0,0,1,1};
@@ -105,18 +108,50 @@ public:
         int arr15 [4] = {1,0,1,1};
         keysToChords[arr15] = E_MINOR;
     }
-    
+ 
     /*
-     * returns -1 if there is no chord (play no sound sample), returns the constant mapping to the chord otherwise.*/
+     * returns -1 if there is no chord (play no sound sample), returns the constant mapping to the chord otherwise.
      */
-    int GetCurrentChord () {
+    int GetCurrentChord (IplImage *currentFrame) {
         if(body.isActive()){
-            return C_CHORD;
+            cout << "- - - STRUM OCCURRED - - - ";
+            int arr [4];
+            for (int i=0;i<4;i++) {
+                keys[i]->DetermineActivity (currentFrame);
+                arr[i] = keys[i]->isActive ();
+                cout << "arr[" << i << "] = " << arr[i] << ", ";
+            }
+            
+            int number = 1*arr[0] + 2*arr[1] + 4*arr[2] + 8*arr[3];
+            
+            switch (number) {
+            case 0:
+            case 5:
+            case 9:
+                return C_CHORD;
+            case 1:
+            case 4:
+            case 8:
+                return G_CHORD;
+            case 2:
+            case 6:
+            case 10:
+                return F_CHORD;
+            case 3:
+            case 7:
+            case 11:
+                return E_MINOR;
+            default:
+                return E_MINOR;
+            }
+            
+            
         }
         else {
+            cout << "body is not active...\n";
             return -1;
         }
-        return 0
+        return 0;
     }
     
     /* Function: UpdateBoundaryMarkers
@@ -375,12 +410,15 @@ public:
     }
     
     
-    
+    /* DETERMINE FINGERING */
     void DetermineFingering (IplImage *currentFrame) {
         if (isCalibrated) {
+            cout << "current fingering: ";
             for (int i=0;i<NUM_OF_KEYS;i++) {
                 keys[i]->DetermineActivity (currentFrame);
+                cout << keys[i]->isActive () << ", ";
             }
+            cout << "\n";
         }
     }
     

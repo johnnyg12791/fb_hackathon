@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "uke.h"
+#include "musicPlayer.h"
 
 /*for opencv*/
 #include <opencv2/opencv.hpp>
@@ -70,7 +71,9 @@ public:
         uke->DetermineFingering (currentFrame);
     }
     
-    
+    int GetCurrentChord () {
+        return uke->GetCurrentChord (currentFrame);
+    }
     
     /* Function: GetNextFrame
      * ----------------------
@@ -120,7 +123,7 @@ public:
                 
         }
 
-        player->play("");
+        //player->play("");
     }
     
     
