@@ -95,6 +95,35 @@ public:
     }
     
     
+    void PlayNote (int note) {
+        
+        MusicPlayer *player = new MusicPlayer();
+        
+        switch (note) {
+            case F_CHORD:
+                player->play (F_CHORD_FILEPATH);
+                break;
+            case C_CHORD:
+                player->play (C_CHORD_FILEPATH);
+                break;
+            case G_CHORD:
+                player->play (G_CHORD_FILEPATH);
+                break;
+            case A_MINOR:
+                player->play (A_MINOR_FILEPATH);
+                break;
+            case E_MINOR:
+                player->play (E_MINOR_FILEPATH);
+                break;
+            //default:??
+                
+                
+        }
+
+        player->play("");
+    }
+    
+    
     /* Function: constructor
      * ---------------------
      * sets up communication with the webcam;

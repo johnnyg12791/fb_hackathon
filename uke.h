@@ -27,6 +27,11 @@ using namespace cv;
 #define A_MINOR 4 //2 //0,2 //0,2,3
 #define E_MINOR 5 //0,1 //0,3 //0,1,2,3
 
+#define C_CHORD_FILEPATH "C.wav"
+#define G_CHORD_FILEPATH "C.wav"
+#define F_CHORD_FILEPATH "C.wav"
+#define A_MINOR_FILEPATH "C.wav"
+#define E_MINOR_FILEPATH "C.wav"
 
 
 class Uke {
