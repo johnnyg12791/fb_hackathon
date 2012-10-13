@@ -22,6 +22,7 @@ int main () {
     IplImage *fullResTemplate = cvLoadImage (FULL_RES_TEMPLATE_NAME, CV_LOAD_IMAGE_GRAYSCALE);
     Virtualele virtualele ("MAIN_DISPLAY", fullResTemplate);
 
+    virtualele.scan_test ("test.bmp");
     
     
     

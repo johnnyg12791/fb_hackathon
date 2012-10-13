@@ -43,6 +43,13 @@ public:
     
     
     
+    int scan_test (char * testImageName) {
+        IplImage *testImage = cvLoadImage (testImageName, CV_LOAD_IMAGE_GRAYSCALE);
+        IplImage * testResult = uke.scan_test (testImage);
+        
+    }
+    
+    
     /* Function: LocateUke
      * -------------------
      * this function will have the Uke object locate the Uke.

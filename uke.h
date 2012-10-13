@@ -21,6 +21,8 @@ private:
     int ** matrix;
     int rows;
     int cols;
+    CvPoint GlobalMax;
+    int GlobalMaxValue;
     
 public:
     
@@ -34,6 +36,16 @@ public:
     void SetEntry (int i, int j, int val) {
         assert ( ((i >= 0) && (i < rows)) && ((j >= 0) && (j < cols)) );
         matrix [i][j] = val;
+        if (val > GlobalMaxValue) {
+            GlobalMaxValue = val;
+            GlobalMax.x = i;
+            GlobalMax.y = j;
+        }
+            
+    }
+    
+    CvPoint GetGlobalMax () {
+        return GlobalMax;
     }
     
     MatchMatrix () {
@@ -89,6 +101,23 @@ public:
     }
     
     
+    IplImage * scan_test (IplImage *testImage) {
+        GenerateMatchMatrix (testImage, 0);
+        IplImage *resultImage = cvCloneImage (testImage);
+        
+        CvRect result = cvRect (matchMatrices[0]->GetGlobalMax().x, matchMatrices[0]->GetGlobalMax().y, BoundaryMarkerImages[0]->width, BoundaryMarkerImages[0]->height);
+        Rectangle (resultImage, cvPoint(result.x, result.y), cvPoint(result.x + result.width, result.y + result.height), Scalar( 0, 0, 0), 3, 8);
+        
+        cvShowImage( "MAIN_DISPLAY", resultImage);
+        int key = 0;
+        while (key != 'q') {
+            key = cvWaitKey (30);
+        }
+        
+    }
+            
+                    
+                    
     /* Function: GetSummedSquaredDifference
      * ------------------------------------
      * given the current frame and the index of the template that we are using, as well
