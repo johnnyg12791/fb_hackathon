@@ -24,15 +24,15 @@ public:
     void UpdateLocation (IplImage * currentFrame, Point bmCenter1, Point bmCenter2) {
         
         Point center;
-        if (bmCenter1.x > bmCenter2.x) {
+        if (bmCenter1.x < bmCenter2.x) {
             
-            center.x = bmCenter1.x + 150;
+            center.x = bmCenter1.x - 50;
             center.y = bmCenter1.y;
             //center.x = bmCenter1.x + x_offset;
             //center.y = bmCenter1.y - y_offset;
         }
         else {
-            center.x = bmCenter2.x + 150;
+            center.x = bmCenter2.x - 50;
             center.y = bmCenter2.y;
         }
         
