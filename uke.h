@@ -14,6 +14,7 @@
 #define SMALLEST_RES_WIDTH 53
 #define RES_STEP 3
 
+using namespace std;
 
 class Uke {
 private:
@@ -27,7 +28,7 @@ private:
     
     /*the match matrices*/
     CvMat **matchMatrices;
-    int numbOfMatchMatrices;
+    int numOfMatchMatrices;
     
 public:
     
@@ -37,9 +38,9 @@ public:
      */
     void FindBoundaryMarkers (IplImage *currentFrame) {
     
-        for (int i=0;i<NUM_OF_TEMPLATES;i++) {
-            GenerateMatchMatrix (currentFrame, i);
-        }
+      //        for (int i=0;i<NUM_OF_TEMPLATES;i++) {
+      //    GenerateMatchMatrix (currentFrame, i);
+      //}
         
         
     }
@@ -51,6 +52,7 @@ public:
      * as the coordinates within the image at which we are calculating, this function will return
      * the summed-squared-difference between the template and that image region.
      */
+    /*
     int GetSummedSquaredDifference (IplImage *currentFrame, IplImage *currentTemplate, int x, int y) {
         
         int totalSum = 0;
@@ -58,18 +60,18 @@ public:
         char *imagePosition = currentFrame->imageData + x*currentFrame->widthStep + y;
         char *templatePosition = currentTemplate->imageData;
         
-        for (int i=0;i<currentTemplate->rows;i++) {
-            for (int j=0;j<currentTemplate->cols;j++) {
+        for (int i=0;i<currentTemplate->width;i++) {
+            for (int j=0;j<currentTemplate->height;j++) {
                 
-                totalSum += (int) pow( (*(imagePosition + j) - *(templatePosition + j), 2);
+	      totalSum += (int) pow( (*(imagePosition + j) - *(templatePosition + j)), 2);
             }
             imagePosition += currentFrame->widthStep;
-            templatePosition += templateFrame->widthSTep;
+            templatePosition += currentTemplate->widthStep;
         }
    
         return totalSum;
     }
-
+    */
     
     /* Function: GenerateMatchMatrix 
      * -----------------------------
@@ -77,10 +79,11 @@ public:
      * use, this function will scan that match template over the entire image and 
      * fill the appropriate member of 'matchMatrices'
      */
+    /*
     void GenerateMatchMatrix (IplImage * currentFrame, int index) {
-        CVMat       *currentMatchMatrix = matchMatrices [i];
-        IplImage    *currentTemplate = BoundaryMarkerImages [i];
-        char        * writeLocation = (char*) matchMatrices[i]->data;
+        CvMat       *currentMatchMatrix = matchMatrices [index];
+        IplImage    *currentTemplate = BoundaryMarkerImages [index];
+        char        * writeLocation = (char*) matchMatrices[index]->data;
         
         for (int i=0;i<currentMatchMatrix->rows;i++) {
             for (int j=0;j<currentMatchMatrix->cols;j++) {
@@ -93,6 +96,7 @@ public:
         
         
     }
+    */
     
     
     /* Function: InitMatchMatrices
@@ -104,7 +108,7 @@ public:
     void InitMatchMatrices (IplImage *targetImage) {
         int width = targetImage->width;
         int height = targetImage->height;
-        matchMatrices = new CvMat[numOfBoundaryMarkerImages];
+        matchMatrices = new CvMat* [numOfBoundaryMarkerImages];
         for (int i = 0; i < numOfBoundaryMarkerImages; i++) {
             int rows = width - BoundaryMarkerImages[i]->width + 1;
             int cols = height - BoundaryMarkerImages[i]->height + 1;
@@ -122,14 +126,15 @@ public:
      * the 'numOfBoundaryMarkerImages
      */
     void InitBoundaryMarkerImages (IplImage *fullSizeTemplate) {
+        
         int numOfBoundaryMarkerImages = (LARGEST_RES_WIDTH - SMALLEST_RES_WIDTH) / 3;
-        BoundaryMarkerImages = new IplImage[numOfBoundaryMarkerImages];
+        BoundaryMarkerImages = new IplImage* [numOfBoundaryMarkerImages];
         for (int i = LARGEST_RES_WIDTH; i > SMALLEST_RES_WIDTH; i = i - 3) {
             int height = i * LARGEST_RES_HEIGHT / LARGEST_RES_WIDTH;
-            BoundaryMarkerImages[i] = cvCreateImage(CvSize(i, height), IPL_DEPTH_8U, 1);
+            BoundaryMarkerImages[i] = cvCreateImage(cvSize(i, height), IPL_DEPTH_8U, 1);
             cvResize(fullSizeTemplate,  BoundaryMarkerImages[i], 1);
         }
-        
+     
     }
     
     
@@ -140,11 +145,13 @@ public:
      * and, in addition, initialize the array of 'matchmatrices'
      */
      
-     
-    Uke (IplImage *fullSizeTemplate) {
+    Uke () {
+    }
+    Uke (IplImage *currentFrame, IplImage *fullSizeTemplate) {
         numOfBoundaryMarkerImages = 0;
         numOfMatchMatrices = 0;
         InitBoundaryMarkerImages(fullSizeTemplate);
+        InitMatchMatrices (currentFrame);
         
     }
     
