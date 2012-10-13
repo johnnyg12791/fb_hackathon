@@ -10,6 +10,7 @@
 
 
 #define FULL_RES_TEMPLATE_NAME "template.bmp"
+#define TEST_IMAGE_NAME "test2.bmp"
 using namespace std;
 
 
@@ -19,20 +20,19 @@ int main () {
     cvNamedWindow ("MAIN_DISPLAY");
     cvResizeWindow ("MAIN_DISPLAY", 640, 640);
 
+    IplImage *testImage = cvLoadImage ( currentScreen)//TEST_IMAGE_NAME, -1);
     IplImage *fullResTemplate = cvLoadImage (FULL_RES_TEMPLATE_NAME, CV_LOAD_IMAGE_GRAYSCALE);
     Virtualele virtualele ("MAIN_DISPLAY", fullResTemplate);
     
     
     /*### Routine #1: find the ukulele ###*/
 //    int found = 0;
- //   while (!found) {
+//    while (!found) {
     
-    cout << "before found\n";
+    IplImage *testImage;
     int found = virtualele.LocateUke ();
-    cout << "after found\n";
-    // }
-    
-
+    //cvShowImage ("MAIN_DISPLAY", testImage);
+    virtualele.DisplayFrame ();
     /*### Routine #2: track and play ###*/
     int key = 0;
     while (key != 0) {
@@ -45,8 +45,8 @@ int main () {
     /*### Delay Until End ###*/
     key = 0;
     while (key != 'q') {
-        virtualele.GetNextFrame ();
-        virtualele.DisplayFrame ();
+        //virtualele.GetNextFrame ();
+        //virtualele.DisplayFrame ();
         key = cvWaitKey(30);
     }
 
