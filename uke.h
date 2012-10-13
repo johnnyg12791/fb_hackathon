@@ -7,6 +7,7 @@
 #include <math.h>
 #include "boundaryMarker.h"
 #include "key.h"
+#include "body.h"
 
 /*for opencv*/
 #include <opencv2/opencv.hpp>
@@ -37,6 +38,7 @@ private:
     
     /*the keys*/
     Key *keys [NUM_OF_KEYS];
+    Body body;
     
 public:
     
@@ -165,6 +167,8 @@ public:
         
         SetBoundaryMarkers (    BoundaryMarkerImages_White[bestMatchResolution_white], bestMatch_white, 
                                 BoundaryMarkerImages_Black[bestMatchResolution_black], bestMatch_black);
+        
+        body.init (currentFrame, boundaryMarker_white.center, boundaryMarker_black.center, boundaryMarker_white.width);
     }
     
     
