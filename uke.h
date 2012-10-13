@@ -34,11 +34,35 @@ public:
     void FindBoundaryMarkers (IplImage *currentFrame) {
     
         for (int i=0;i<NUM_OF_TEMPLATES;i++) {
-            GenerateMatchMatrix (currentFrame, i)
+            GenerateMatchMatrix (currentFrame, i);
         }
         
         
     }
+    
+    
+    /* Function: GetSummedSquaredDifference
+     * ------------------------------------
+     * given the current frame and the index of the template that we are using, as well
+     * as the coordinates within the image at which we are calculating, this function will return
+     * the summed-squared-difference between the template and that image region.
+     */
+    int GetSummedSquaredDifference (IplImage *currentFrame, IplImage *currentTemplate, int x, int y) {
+        
+        int totalSum = 0;
+        
+        for (int i=0;i<currentTemplate->rows;i++) {
+            for (int j=0;j<currentTemplate->cols;j++) {
+                
+                
+                totalsum += 
+                
+            }
+        }
+   
+            
+    }
+    
     
     /* Function: GenerateMatchMatrix 
      * -----------------------------
@@ -46,7 +70,18 @@ public:
      * use, this function will scan that match template over the entire image and 
      * fill the appropriate member of 'matchMatrices'
      */
-    void GenerateMatchMatrix () {
+    void GenerateMatchMatrix (IplImage * currentFrame, int index) {
+        CVMat       *currentMatchMatrix = matchMatrices [i];
+        IplImage    *currentTemplate = BoundaryMarkerImages [i];
+        
+        for (int i=0;i<currentMatchMatrix->rows;i++) {
+            for (int j=0;j<currentMatchMatrix->cols;j++) {
+             
+                currentMatchMatrix[i,j] = GetSummedSquaredDifference (currentFrame, currentTemplate, int i, int j);
+                
+            }
+        }
+        
         
     }
     
