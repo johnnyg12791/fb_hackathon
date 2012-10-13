@@ -1,3 +1,3 @@
-fb_hackathon
+VirtuaLele
 ============
-Stuff is going well so far
+Don't you hate it when you don't have a ukulele but only a strange looking piece of cardboard in front of you? Here's the solution. A virtual ukulele which can be played with your webcam. 
