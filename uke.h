@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#include "boundaryMarker.h"
+#include "key.h"
 
 /*for opencv*/
 #include <opencv2/opencv.hpp>
@@ -17,57 +19,92 @@ using namespace std;
 using namespace cv;
 
 
-class MatchMatrix {
-public:
-    cv::Mat matrix;
-    CvPoint globalMax;
-    int globalMaxVal;
-    
-    
-    CvPoint GetGlobalMax () {
-        return globalMax;
-    }
-    
-    MatchMatrix () {
-    }
-    MatchMatrix (int r, int c) {
-        matrix.create (r, c, CV_8U);
-        globalMaxVal = -1;
-    }
-};
 
 
 class Uke {
 private:
     /*top and bottom boundarymarkers*/
-    CvRect BoundaryMarker_Max, BoundaryMarker_Min;
+    BoundaryMarker boundaryMarker_white, boundaryMarker_black;
     
     IplImage **BoundaryMarkerImages_White;
     IplImage **BoundaryMarkerImages_Black;
     int numOfBoundaryMarkerImages;
     
     /*the match matrices*/
-    MatchMatrix **matchMatrices_White;
-    MatchMatrix **matchMatrices_Black;
+    Mat **matchMatrices_White;
+    Mat **matchMatrices_Black;
     int numOfMatchMatrices;
+    
+    /*the keys*/
+    Key *keys [3];
     
 public:
     
     
     /* Function: UpdateBoundaryMarkers 
      * -------------------------------
-     * given the stats from FindBoundaryMarkers, this function will update the boundary markers appropriately
+     * given the stats from FindBoundaryMarkers, this function will set the initial parameters in the boundarymarker objects.
+     * this function should be used during DETECTION, not during tracking.
      */
-    void UpdateBoundaryMarkers (Point Max, Point Min, int resolutionIndexMax, int resolutionIndexMin) {
-        BoundaryMarker_Max.x        = Max.x;
-        BoundaryMarker_Max.y        = Max.y;
-        BoundaryMarker_Max.width   = BoundaryMarkerImages_White [resolutionIndexMax]->width;
-        BoundaryMarker_Max.height   = BoundaryMarkerImages_White [resolutionIndexMax]->height;
+    void SetBoundaryMarkers (    Point White, int resolution_white, int dimension_white,
+                                 Point Black, int resolution_black, int dimension_black) {
+        boundaryMarker_black.Set (White, resolution_white, dimension_white);
+        boundaryMarker_white.Set (Black, resolution_black, dimension_black);
+    }
+    
+    /* Function: UpdateBoundaryMarkers
+     * -------------------------------
+     * given the stats from FindBoundaryMarkers, this function will update the boundary markers appropriately.
+     * this function should be used during TRACKING, not during detection.
+     */
+    void UpdateBoundaryMarkers (Point white_tl, Point black_tl) {
+        boundaryMarker_white.Update (white_tl);
+        boundaryMarker_black.Update (black_tl);
+        for (int i=0;i<3;i++) {
+            keys[i]->Update (boundaryMarker_white.center, boundaryMarker_black.center);
+        }
         
-        BoundaryMarker_Min.x        = Min.x;
-        BoundaryMarker_Min.y        = Min.y;
-        BoundaryMarker_Min.width    = BoundaryMarkerImages_Black [resolutionIndexMin]->width;
-        BoundaryMarker_Min.height   = BoundaryMarkerImages_Black [resolutionIndexMin]->height;
+    }
+    
+    
+    
+    void DrawUkeFrame (IplImage *testImage) {
+        Mat testImageMat (testImage);
+        rectangle (     testImageMat,
+                        boundaryMarker_white.topLeft,
+                        Point (boundaryMarker_white.topLeft.x + boundaryMarker_white.width, boundaryMarker_white.topLeft.y + boundaryMarker_white.height),
+                        Scalar (0, 255, 0, 0),
+                        3,
+                        8,
+                        0 );
+        
+        rectangle (     testImageMat,
+                        boundaryMarker_black.topLeft,
+                        Point (boundaryMarker_black.topLeft.x + boundaryMarker_black.width, boundaryMarker_black.topLeft.y + boundaryMarker_black.height),
+                        Scalar (0, 0, 255, 0),
+                        3,
+                        8,
+                        0 );
+        
+        line (          testImageMat,
+                        boundaryMarker_black.center,
+                        boundaryMarker_white.center,
+                        Scalar (255, 0, 0, 0),
+                        3, 8, 0);
+        
+        for (int i=0;i<3;i++) {
+            
+            circle (    testImageMat,
+                        keys[i]->location,
+                        keys[i]->radius,
+                        Scalar (0, 0, 128, 0),
+                        2, 8, 0);
+            
+        }
+        
+        IplImage newImage = testImageMat;
+        
+        
     }
     
     
@@ -75,9 +112,8 @@ public:
      * -----------------------------
      * this function will initially locate and set the two boundary markers.
      */
-    void FindBoundaryMarkers (IplImage *currentFrame) {
+    void DetectBoundaryMarkers (IplImage *currentFrame) {
     
-        
         CvPoint bestMatch_white, bestMatch_black;
         double bestMatchVal_white = 1e+10, bestMatchVal_black = 1e+10;
         int bestMatchResolution_white = -1;
@@ -85,7 +121,6 @@ public:
         
         
         for (int i=0;i<numOfBoundaryMarkerImages;i++) {
-            cout << "# # # i = " << i << " # # # \n";
             double min_white = 1e+10, max_white = 0;
             double min_black = 1e+10, max_black = 0;
             cv::Point minLoc_white, maxLoc_white;
@@ -94,18 +129,14 @@ public:
             GenerateMatchMatrix (currentFrame, BoundaryMarkerImages_White[i], matchMatrices_White[i]);
             GenerateMatchMatrix (currentFrame, BoundaryMarkerImages_Black[i], matchMatrices_Black[i]);
             
-            minMaxLoc (matchMatrices_White[i]->matrix, &min_white, &max_white, &minLoc_white, &maxLoc_white, Mat());
-            minMaxLoc (matchMatrices_Black[i]->matrix, &min_black, &max_black, &minLoc_black, &maxLoc_black, Mat());
-            
-            /*note: this isnt guaranteed to work... but in a constrained environment, we hope it will.*/
+            minMaxLoc (*matchMatrices_White[i], &min_white, &max_white, &minLoc_white, &maxLoc_white, Mat());
+            minMaxLoc (*matchMatrices_Black[i], &min_black, &max_black, &minLoc_black, &maxLoc_black, Mat());
 
             if (min_white < bestMatchVal_white) {
                 bestMatchVal_white = min_white;
                 bestMatch_white.x = minLoc_white.x;
                 bestMatch_white.y = minLoc_white.y;
                 bestMatchResolution_white = i;
-                cout << "Did some update, new best resolution " << i << endl;
-                cout << "new white min: " << min_white << endl;
             }
             
             if (min_black < bestMatchVal_black) {
@@ -113,47 +144,46 @@ public:
                 bestMatch_black.x = minLoc_black.x;
                 bestMatch_black.y = minLoc_black.y;
                 bestMatchResolution_black = i;
-                cout << "new black min: " << min_black << endl;
             }
-            
-            UpdateBoundaryMarkers (bestMatch_white, bestMatch_black, bestMatchResolution_white, bestMatchResolution_black);
 
-        }
-        cout << "finished for loop: " << bestMatchResolution_white << " "  << bestMatchResolution_black << endl;
-
-        UpdateBoundaryMarkers (bestMatch_white, bestMatch_black, bestMatchResolution_white, bestMatchResolution_black);
-        DrawBoundaryMarkers (currentFrame);
-        cvShowImage ("MAIN_DISPLAY", currentFrame);
-        int key = 0;
-        while (key != 'q') {
-            key = cvWaitKey (30);
         }
         
+        SetBoundaryMarkers ( bestMatch_white, bestMatchResolution_white, BoundaryMarkerImages_White[bestMatchResolution_white]->width,
+                               bestMatch_black, bestMatchResolution_black, BoundaryMarkerImages_Black[bestMatchResolution_black]->width);
     }
     
-    void DrawBoundaryMarkers (IplImage *testImage) {
-        Mat testImageMat (testImage);
+    
+    /* Function: TrackBoundaryMarkers
+     * ------------------------------
+     * given a newly captured frame, this function will determine the most likely position for the boundary markers
+     * given their position in the previous frame. this is the primary function for TRACKING.
+     */
+    void TrackBoundaryMarkers (IplImage *currentFrame) {
 
-        cout << "DrawBoundaryMarkers " << endl;
-        rectangle (   testImageMat,
-                        Point (BoundaryMarker_Max.x, BoundaryMarker_Max.y),
-                        Point (BoundaryMarker_Max.x + BoundaryMarker_Max.width, BoundaryMarker_Max.y + BoundaryMarker_Max.height),
-                        Scalar (0, 255, 0, 0),
-                        3,
-                        8,
-                        0 );
+        double min_white = 1e+10, max_white = 0;
+        double min_black = 1e+10, max_black = 0;
+        cv::Point minLoc_white, maxLoc_white;
+        cv::Point minLoc_black, maxLoc_black;
         
-        rectangle (   testImageMat,
-                   Point (BoundaryMarker_Min.x, BoundaryMarker_Min.y),
-                   Point (BoundaryMarker_Min.x + BoundaryMarker_Min.width, BoundaryMarker_Min.y + BoundaryMarker_Min.height),
-                   Scalar (0, 128, 0, 0),
-                   3,
-                   8,
-                   0 );
+        cvSetImageROI (currentFrame, boundaryMarker_white.scanRegion);
+
+        GenerateMatchMatrix (currentFrame, BoundaryMarkerImages_White [boundaryMarker_white.resolutionIndex], boundaryMarker_white.matchMatrix);
+
+        minMaxLoc(*boundaryMarker_white.matchMatrix, &min_white, &max_white, &minLoc_white, &maxLoc_white, Mat());
+        Point newLocation_white;
+        newLocation_white.x = minLoc_white.x + boundaryMarker_white.scanRegion.x;
+        newLocation_white.y = minLoc_white.y + boundaryMarker_white.scanRegion.y;
         
-        IplImage newImage = testImageMat;
+        cvSetImageROI (currentFrame, boundaryMarker_black.scanRegion);
+        GenerateMatchMatrix (currentFrame, BoundaryMarkerImages_Black [boundaryMarker_black.resolutionIndex], boundaryMarker_black.matchMatrix);
+        minMaxLoc(*boundaryMarker_black.matchMatrix, &min_black, &max_black, &minLoc_black, &maxLoc_black, Mat());
+        Point newLocation_black;
+        newLocation_black.x = minLoc_black.x + boundaryMarker_black.scanRegion.x;
+        newLocation_black.y = minLoc_black.y + boundaryMarker_black.scanRegion.y;
         
+        UpdateBoundaryMarkers (newLocation_white, newLocation_black);
         
+        cvResetImageROI (currentFrame);
     }
             
     
@@ -162,7 +192,7 @@ public:
      * given a region of an image to scan over (scanImage), and a template to scan with (templageImage), this function will
      * fill out the matrix 'resultMat' so that it reflects the summed-squared-difference.
      */
-    void GenerateMatchMatrix (IplImage * scanImage, IplImage* templateImage, MatchMatrix *resultMat) {
+    void GenerateMatchMatrix (IplImage * scanImage, IplImage* templateImage, Mat *resultMat) {
         
         Mat scanImageMat (scanImage);
         Mat scanImageMatGray;
@@ -170,10 +200,19 @@ public:
         cvtColor (scanImageMat, scanImageMatGray, CV_RGB2GRAY);
         
         Mat templateImageMat (templateImage);
-        matchTemplate (scanImageMatGray, templateImageMat, resultMat->matrix, CV_TM_SQDIFF_NORMED);
+        matchTemplate (scanImageMatGray, templateImageMat, *resultMat, CV_TM_SQDIFF_NORMED);
         
     }
-      
+    
+    
+    
+    
+    /* Function: GrabBoundaryMarkerTemplates 
+     * -------------------------------------
+     * this function will fill up 
+    
+    
+    
     
     /* Function: InitMatchMatrices
      * ---------------------------
@@ -182,18 +221,20 @@ public:
      * the 'numOfMatchMatrices
      */
     void InitMatchMatrices (IplImage *targetImage) {
-        int width = targetImage->width;
-        int height = targetImage->height;
-        matchMatrices_White = new MatchMatrix* [numOfBoundaryMarkerImages];
-        matchMatrices_Black = new MatchMatrix* [numOfBoundaryMarkerImages];
+        int imageWidth = targetImage->width;
+        int imageHeight = targetImage->height;
+        matchMatrices_White = new Mat* [numOfBoundaryMarkerImages];
+        matchMatrices_Black = new Mat* [numOfBoundaryMarkerImages];
         
         for (int i = 0; i < numOfBoundaryMarkerImages; i++) {
-            int rows = (width - BoundaryMarkerImages_White[i]->width) + 1;
-            int cols = (height - BoundaryMarkerImages_White[i]->height) + 1;
-            matchMatrices_White[i] = new MatchMatrix (rows, cols);
-            matchMatrices_Black[i] = new MatchMatrix (rows, cols);
+            
+            int rows = imageWidth - BoundaryMarkerImages_White[i]->width + 1;
+            int cols = imageHeight - BoundaryMarkerImages_White[i]->height + 1;
+            matchMatrices_White[i] = new Mat (rows, cols, CV_8UC1);
+            matchMatrices_Black[i] = new Mat (rows, cols, CV_8UC1);
         }
         numOfMatchMatrices = numOfBoundaryMarkerImages;
+    
     }
     
     
@@ -230,17 +271,18 @@ public:
     Uke () {
     }
     Uke (IplImage *currentFrame, IplImage *fullSizeTemplate_white, IplImage *fullSizeTemplate_black) {
-        cout << "BEGIN Uke Init" << endl;
+
+        boundaryMarker_white.init (currentFrame->height, currentFrame->width);
+        boundaryMarker_black.init (currentFrame->height, currentFrame->width);
         
         numOfBoundaryMarkerImages = 0;
         numOfMatchMatrices = 0;
         InitBoundaryMarkerImages(fullSizeTemplate_white, fullSizeTemplate_black);
-        cout << "After InitBoundaryMarkerImages " << endl;
-
-
         InitMatchMatrices (currentFrame);
-        cout << "After InitMatchMatrices " << endl;
-
+        
+        keys[0] = new Key (KEY1_RATIO, KEY_RADIUS);
+        keys[1] = new Key (KEY2_RATIO, KEY_RADIUS);
+        keys[2] = new Key (KEY3_RATIO, KEY_RADIUS);
         
         
     }

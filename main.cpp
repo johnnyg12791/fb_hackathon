@@ -28,28 +28,41 @@ int main () {
 
     Virtualele virtualele ("MAIN_DISPLAY", fullResTemplate_white, fullResTemplate_black);
     
+    int key = 0;
+    bool currentlyTracking = false;
+    while (true) {
+        key = cvWaitKey (30);
+        if (key == 'r') {
+            virtualele.DetectUke ();
+            currentlyTracking = true;
+        }
+        else if (key == 'c') {
+            virtualele.CalibrateUke ();
+        }
+        else if (key == ' ') {
+            return;
+        }
+        else {
+            if (currentlyTracking) virtualele.TrackUke ();
+        }
+    }
+    
     
     /*### Routine #1: find the ukulele ###*/
 //    int found = 0;
 //    while (!found) {
     
-    int found = virtualele.LocateUke ();
+    int found = virtualele.DetectUke ();
     //cvShowImage ("MAIN_DISPLAY", testImage);
     virtualele.DisplayFrame ();
     /*### Routine #2: track and play ###*/
-    int key = 0;
-    while (key != 0) {
-        
-        virtualele.DetermineFingering ();
-        
-        key = cvWaitKey (30);
-    }
     
-    /*### Delay Until End ###*/
-    key = 0;
+    
+    int key = 0;
     while (key != 'q') {
-        //virtualele.GetNextFrame ();
-        //virtualele.DisplayFrame ();
+        virtualele.GetNextFrame ();
+        virtualele.TrackUke();
+        virtualele.DisplayFrame ();
         key = cvWaitKey(30);
     }
 

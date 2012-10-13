@@ -7,6 +7,6 @@ OPENCV = `pkg-config --libs opencv`
 
 virtualele: $(OBJS)
 	$(CC) $(LFLAGS) -o virtualele $(OBJS) $(OPENCV)
-main.o: main.cpp virtualele.h uke.h
+main.o: main.cpp virtualele.h uke.h boundaryMarker.h key.h
 	$(CC) $(CFLAGS) $(LFLAGS) main.cpp $(OPENCV)
 

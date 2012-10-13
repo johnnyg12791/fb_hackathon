@@ -22,6 +22,58 @@ private:
     Uke *uke;
     
 public:
+
+    
+    
+    
+    /* Function: DetectUke
+     * -------------------
+     * this function will have the Uke object locate the Uke. returns 1 when it works, 0 otherwise.
+     */
+    int DetectUke () {
+        uke->DetectBoundaryMarkers (currentFrame);
+        uke->DrawUkeFrame (currentFrame);
+    }
+    
+    int DetectUke (IplImage *testImage) {
+        uke->DetectBoundaryMarkers (testImage);
+        uke->DrawUkeFrame (testImage);
+    }
+    
+    int TrackUke () {
+        uke->TrackBoundaryMarkers (currentFrame);
+        uke->DrawUkeFrame (currentFrame);
+    }
+    
+    void CalibrateUke () {
+        uke->GrabBoundaryMarkerTemplates ();
+        uke->GrabInactiveKeyTemplates ();
+        int key = 0;
+        while (key != 'c') {
+            GetNextFrame ();
+            DisplayFrame ();
+            key = cvWaitKey(30);
+        }
+        uke->GrabActiveKeyTemplates ();
+    }
+    
+    
+    
+    
+    
+    
+    
+    /* Function: DetermineFingering
+     * ----------------------------
+     * this function will track the uke and determine the fingering...
+     */
+    int DetermineFingering () {
+        return 0;
+    }
+    
+    
+    
+    
     
     
     /* Function: GetNextFrame
@@ -43,32 +95,6 @@ public:
         cvShowImage (mainDisplayName, currentFrame);
     }
     
-    
-    
-    /* Function: LocateUke
-     * -------------------
-     * this function will have the Uke object locate the Uke. returns 1 when it works, 0 otherwise.
-     */
-    int LocateUke () {
-        
-        uke->FindBoundaryMarkers (currentFrame);
-        uke->DrawBoundaryMarkers (currentFrame);
-        return 1;
-        
-    }
-    int LocateUke (IplImage *testImage) {
-        uke->FindBoundaryMarkers (testImage);
-        uke->DrawBoundaryMarkers (testImage);
-        return 1;
-    }
-    
-    /* Function: DetermineFingering
-     * ----------------------------
-     * this function will track the uke and determine the fingering...
-     */
-    int DetermineFingering () {
-        return 0;
-    }
     
     
     /* Function: constructor
