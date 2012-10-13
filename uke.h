@@ -101,7 +101,16 @@ public:
      * the appropriate *number* and *resolutions* of match matrices; it will also set 
      * the 'numOfMatchMatrices
      */
-    void InitMatchMatrices () {
+    void InitMatchMatrices (IplImage *targetImage) {
+        int width = targetImage->width;
+        int height = targetImage->height;
+        matchMatrices = new CvMat[numOfBoundaryMarkerImages];
+        for (int i = 0; i < numOfBoundaryMarkerImages; i++) {
+            int rows = width - BoundaryMarkerImages[i]->width + 1;
+            int cols = height - BoundaryMarkerImages[i]->height + 1;
+            matchMatrices[i] = cvCreateMat(rows, cols, CV_32SC1);
+        }
+        numOfMatchMatrices = numOfBoundaryMarkerImages;
         
     }
     
@@ -133,6 +142,8 @@ public:
      
      
     Uke (IplImage *fullSizeTemplate) {
+        numOfBoundaryMarkerImages = 0;
+        numOfMatchMatrices = 0;
         InitBoundaryMarkerImages(fullSizeTemplate);
         
     }
@@ -142,10 +153,15 @@ public:
             delete BoundaryMarkerImages[i];
         }
         delete BoundaryMarkerImages;
+        
+        for (int i = 0; i < numOfMatchMatrices; i++) {
+            cvReleaseMat(&matchMatrices[i]);
+        }
+        delete matchMatrices;
     }
     
     
-}
+};
 
 
 
