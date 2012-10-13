@@ -9,8 +9,10 @@
 #include "virtualele.h"
 
 
-#define FULL_RES_TEMPLATE_NAME "template.bmp"
-#define TEST_IMAGE_NAME "test2.bmp"
+#define FULL_RES_TEMPLATE_NAME_WHITE "template.bmp"
+#define FULL_RES_TEMPLATE_NAME_BLACK "template_black.bmp"
+
+#define TEST_IMAGE_NAME "test_img.jpg"
 using namespace std;
 
 
@@ -20,16 +22,17 @@ int main () {
     cvNamedWindow ("MAIN_DISPLAY");
     cvResizeWindow ("MAIN_DISPLAY", 640, 640);
 
-    IplImage *testImage = cvLoadImage ( currentScreen)//TEST_IMAGE_NAME, -1);
-    IplImage *fullResTemplate = cvLoadImage (FULL_RES_TEMPLATE_NAME, CV_LOAD_IMAGE_GRAYSCALE);
-    Virtualele virtualele ("MAIN_DISPLAY", fullResTemplate);
+    IplImage *testImage = cvLoadImage (TEST_IMAGE_NAME);//TEST_IMAGE_NAME, -1);
+    IplImage *fullResTemplate_white = cvLoadImage (FULL_RES_TEMPLATE_NAME_WHITE, 0);
+    IplImage *fullResTemplate_black = cvLoadImage (FULL_RES_TEMPLATE_NAME_BLACK, 0);
+
+    Virtualele virtualele ("MAIN_DISPLAY", fullResTemplate_white, fullResTemplate_black);
     
     
     /*### Routine #1: find the ukulele ###*/
 //    int found = 0;
 //    while (!found) {
     
-    IplImage *testImage;
     int found = virtualele.LocateUke ();
     //cvShowImage ("MAIN_DISPLAY", testImage);
     virtualele.DisplayFrame ();

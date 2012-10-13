@@ -75,13 +75,13 @@ public:
      * ---------------------
      * sets up communication with the webcam;
      */
-    Virtualele (char * newMainDisplayName, IplImage *fullResTemplate)
+    Virtualele (char * newMainDisplayName, IplImage *fullResTemplate_white, IplImage *fullResTemplate_black )
     {
         capture = cvCreateCameraCapture (-1);
         GetNextFrame ();
         mainDisplayName = newMainDisplayName;
         
-        uke = new Uke (currentFrame, fullResTemplate);
+        uke = new Uke (currentFrame, fullResTemplate_white, fullResTemplate_black);
         cout << "# # # INITIALIZATION COMPLETE # # #\n";
     }
     

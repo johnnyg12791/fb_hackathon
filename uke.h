@@ -11,7 +11,7 @@
 #include <opencv2/highgui/highgui.hpp>
 
 #define SMALLEST_RES_WIDTH 92
-#define RES_STEP 3
+#define RES_STEP 6
 
 using namespace std;
 using namespace cv;
@@ -42,11 +42,13 @@ private:
     /*top and bottom boundarymarkers*/
     CvRect BoundaryMarker_Max, BoundaryMarker_Min;
     
-    IplImage **BoundaryMarkerImages;
+    IplImage **BoundaryMarkerImages_White;
+    IplImage **BoundaryMarkerImages_Black;
     int numOfBoundaryMarkerImages;
     
     /*the match matrices*/
-    MatchMatrix **matchMatrices;
+    MatchMatrix **matchMatrices_White;
+    MatchMatrix **matchMatrices_Black;
     int numOfMatchMatrices;
     
 public:
@@ -56,16 +58,16 @@ public:
      * -------------------------------
      * given the stats from FindBoundaryMarkers, this function will update the boundary markers appropriately
      */
-    void UpdateBoundaryMarkers (Point Max, Point Min, int resolutionIndex) {
+    void UpdateBoundaryMarkers (Point Max, Point Min, int resolutionIndexMax, int resolutionIndexMin) {
         BoundaryMarker_Max.x        = Max.x;
         BoundaryMarker_Max.y        = Max.y;
-        BoundaryMarker_Max.width   = BoundaryMarkerImages [resolutionIndex]->width;
-        BoundaryMarker_Max.height   = BoundaryMarkerImages [resolutionIndex]->height;
+        BoundaryMarker_Max.width   = BoundaryMarkerImages_White [resolutionIndexMax]->width;
+        BoundaryMarker_Max.height   = BoundaryMarkerImages_White [resolutionIndexMax]->height;
         
         BoundaryMarker_Min.x        = Min.x;
         BoundaryMarker_Min.y        = Min.y;
-        BoundaryMarker_Min.width    = BoundaryMarkerImages [resolutionIndex]->width;
-        BoundaryMarker_Min.height   = BoundaryMarkerImages [resolutionIndex]->height;
+        BoundaryMarker_Min.width    = BoundaryMarkerImages_Black [resolutionIndexMin]->width;
+        BoundaryMarker_Min.height   = BoundaryMarkerImages_Black [resolutionIndexMin]->height;
     }
     
     
@@ -76,31 +78,56 @@ public:
     void FindBoundaryMarkers (IplImage *currentFrame) {
     
         
-        CvPoint bestMatchMaxLoc, bestMatchMinLoc;
-        int bestMatchMinVal = 10000, bestMatchMaxVal = -1;
-        int bestMatchResolution = -1;
+        CvPoint bestMatch_white, bestMatch_black;
+        double bestMatchVal_white = 1e+10, bestMatchVal_black = 1e+10;
+        int bestMatchResolution_white = -1;
+        int bestMatchResolution_black = -1;
         
         
         for (int i=0;i<numOfBoundaryMarkerImages;i++) {
             cout << "# # # i = " << i << " # # # \n";
-            double min = 100000, max = 0;
-            cv::Point minLoc, maxLoc;
-            GenerateMatchMatrix (currentFrame, BoundaryMarkerImages[i], matchMatrices[i]);
-            minMaxLoc (matchMatrices[i]->matrix, &min, &max, &minLoc, &maxLoc, Mat());
+            double min_white = 1e+10, max_white = 0;
+            double min_black = 1e+10, max_black = 0;
+            cv::Point minLoc_white, maxLoc_white;
+            cv::Point minLoc_black, maxLoc_black;
+            
+            GenerateMatchMatrix (currentFrame, BoundaryMarkerImages_White[i], matchMatrices_White[i]);
+            GenerateMatchMatrix (currentFrame, BoundaryMarkerImages_Black[i], matchMatrices_Black[i]);
+            
+            minMaxLoc (matchMatrices_White[i]->matrix, &min_white, &max_white, &minLoc_white, &maxLoc_white, Mat());
+            minMaxLoc (matchMatrices_Black[i]->matrix, &min_black, &max_black, &minLoc_black, &maxLoc_black, Mat());
             
             /*note: this isnt guaranteed to work... but in a constrained environment, we hope it will.*/
-            if ((max > bestMatchMaxVal)) {
-                bestMatchMinVal = min;
-                bestMatchMaxVal = max;
-                bestMatchMaxLoc.x = maxLoc.x;
-                bestMatchMaxLoc.y = maxLoc.y;
-                bestMatchMinLoc.x = minLoc.x;
-                bestMatchMinLoc.y = minLoc.y;
-                bestMatchResolution = i;
+
+            if (min_white < bestMatchVal_white) {
+                bestMatchVal_white = min_white;
+                bestMatch_white.x = minLoc_white.x;
+                bestMatch_white.y = minLoc_white.y;
+                bestMatchResolution_white = i;
+                cout << "Did some update, new best resolution " << i << endl;
+                cout << "new white min: " << min_white << endl;
             }
+            
+            if (min_black < bestMatchVal_black) {
+                bestMatchVal_black = min_black;
+                bestMatch_black.x = minLoc_black.x;
+                bestMatch_black.y = minLoc_black.y;
+                bestMatchResolution_black = i;
+                cout << "new black min: " << min_black << endl;
+            }
+            
+            UpdateBoundaryMarkers (bestMatch_white, bestMatch_black, bestMatchResolution_white, bestMatchResolution_black);
+
         }
-        
-        UpdateBoundaryMarkers (bestMatchMaxLoc, bestMatchMinLoc, bestMatchResolution);
+        cout << "finished for loop: " << bestMatchResolution_white << " "  << bestMatchResolution_black << endl;
+
+        UpdateBoundaryMarkers (bestMatch_white, bestMatch_black, bestMatchResolution_white, bestMatchResolution_black);
+        DrawBoundaryMarkers (currentFrame);
+        cvShowImage ("MAIN_DISPLAY", currentFrame);
+        int key = 0;
+        while (key != 'q') {
+            key = cvWaitKey (30);
+        }
         
     }
     
@@ -126,11 +153,7 @@ public:
         
         IplImage newImage = testImageMat;
         
-        cvShowImage ("MAIN_DISPLAY", &newImage);
-        int key = 0;
-        while (key != 'q') {
-            key = cvWaitKey (30);
-        }
+        
     }
             
     
@@ -143,7 +166,9 @@ public:
         
         Mat scanImageMat (scanImage);
         Mat scanImageMatGray;
+        
         cvtColor (scanImageMat, scanImageMatGray, CV_RGB2GRAY);
+        
         Mat templateImageMat (templateImage);
         matchTemplate (scanImageMatGray, templateImageMat, resultMat->matrix, CV_TM_SQDIFF_NORMED);
         
@@ -159,11 +184,14 @@ public:
     void InitMatchMatrices (IplImage *targetImage) {
         int width = targetImage->width;
         int height = targetImage->height;
-        matchMatrices = new MatchMatrix* [numOfBoundaryMarkerImages];
+        matchMatrices_White = new MatchMatrix* [numOfBoundaryMarkerImages];
+        matchMatrices_Black = new MatchMatrix* [numOfBoundaryMarkerImages];
+        
         for (int i = 0; i < numOfBoundaryMarkerImages; i++) {
-            int rows = (width - BoundaryMarkerImages[i]->width) + 1;
-            int cols = (height - BoundaryMarkerImages[i]->height) + 1;
-            matchMatrices[i] = new MatchMatrix (rows, cols);
+            int rows = (width - BoundaryMarkerImages_White[i]->width) + 1;
+            int cols = (height - BoundaryMarkerImages_White[i]->height) + 1;
+            matchMatrices_White[i] = new MatchMatrix (rows, cols);
+            matchMatrices_Black[i] = new MatchMatrix (rows, cols);
         }
         numOfMatchMatrices = numOfBoundaryMarkerImages;
     }
@@ -175,14 +203,18 @@ public:
      * different resampled resultions; it will also set
      * the 'numOfBoundaryMarkerImages
      */
-    void InitBoundaryMarkerImages (IplImage *fullSizeTemplate) {
+    void InitBoundaryMarkerImages (IplImage *fullSizeTemplate_white, IplImage *fullSizeTemplate_black) {
         
-        int largestResWidth = fullSizeTemplate->width;
+        int largestResWidth = fullSizeTemplate_white->width;
         numOfBoundaryMarkerImages = (largestResWidth - SMALLEST_RES_WIDTH + 1) / RES_STEP;
-        BoundaryMarkerImages = new IplImage *[numOfBoundaryMarkerImages];
+        BoundaryMarkerImages_White = new IplImage *[numOfBoundaryMarkerImages];
+        BoundaryMarkerImages_Black = new IplImage *[numOfBoundaryMarkerImages];
         for (int i = largestResWidth, j = 0; i > SMALLEST_RES_WIDTH; i = i - RES_STEP, j++) {
-            BoundaryMarkerImages[j] = cvCreateImage(cvSize(i, i), IPL_DEPTH_8U, 1);
-            cvResize(fullSizeTemplate,  BoundaryMarkerImages[j], 1);
+            BoundaryMarkerImages_White[j] = cvCreateImage(cvSize(i, i), IPL_DEPTH_8U, 1);
+            cvResize(fullSizeTemplate_white,  BoundaryMarkerImages_White[j], 1);
+            
+            BoundaryMarkerImages_Black[j] = cvCreateImage(cvSize(i, i), IPL_DEPTH_8U, 1);
+            cvResize(fullSizeTemplate_black,  BoundaryMarkerImages_Black[j], 1);
         }
      
     }
@@ -197,27 +229,39 @@ public:
      
     Uke () {
     }
-    Uke (IplImage *currentFrame, IplImage *fullSizeTemplate) {
+    Uke (IplImage *currentFrame, IplImage *fullSizeTemplate_white, IplImage *fullSizeTemplate_black) {
+        cout << "BEGIN Uke Init" << endl;
+        
         numOfBoundaryMarkerImages = 0;
         numOfMatchMatrices = 0;
-        InitBoundaryMarkerImages(fullSizeTemplate);
+        InitBoundaryMarkerImages(fullSizeTemplate_white, fullSizeTemplate_black);
+        cout << "After InitBoundaryMarkerImages " << endl;
+
 
         InitMatchMatrices (currentFrame);
-        
+        cout << "After InitMatchMatrices " << endl;
+
         
         
     }
     
     ~Uke () {
         for (int i = 0; i < numOfBoundaryMarkerImages; i++) {
-            delete BoundaryMarkerImages[i];
+            delete BoundaryMarkerImages_White[i];
+            delete BoundaryMarkerImages_Black[i];
+
         }
-        delete BoundaryMarkerImages;
+        delete BoundaryMarkerImages_White;
+        delete BoundaryMarkerImages_Black;
         
         for (int i = 0; i < numOfMatchMatrices; i++) {
-            delete matchMatrices [i];
+            delete matchMatrices_White [i];
+            delete matchMatrices_Black [i];
+
         }
-        delete matchMatrices;
+        delete matchMatrices_White;
+        delete matchMatrices_Black;
+
     }
     
     
