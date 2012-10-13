@@ -77,7 +77,7 @@ public:
      * use, this function will scan that match template over the entire image and 
      * fill the appropriate member of 'matchMatrices'
      */
-    /*
+    
     void GenerateMatchMatrix (IplImage * currentFrame, int index) {
         CvMat       *currentMatchMatrix = matchMatrices [index];
         IplImage    *currentTemplate = BoundaryMarkerImages [index];
@@ -86,7 +86,7 @@ public:
         for (int i=0;i<currentMatchMatrix->rows;i++) {
             for (int j=0;j<currentMatchMatrix->cols;j++) {
                 
-                *writeLocation = GetSummedSquaredDifference (currentFrame, currentTemplate, int i, int j);
+                *writeLocation = GetSummedSquaredDifference (currentFrame, currentTemplate, i, j);
                 writeLocation += sizeof(char);
                 
             }
@@ -94,7 +94,7 @@ public:
         
         
     }
-    */
+    
     
     
     /* Function: InitMatchMatrices
