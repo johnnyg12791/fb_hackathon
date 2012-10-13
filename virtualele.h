@@ -42,11 +42,38 @@ public:
     
     
     /* Function: DisplayFrame
+     * ----------------------
      * this function will display 'currentFrame' on the main display.
      */
     void DisplayFrame () {
         cvShowImage (mainDisplayName, currentFrame);
     }
+    
+    
+    
+    /* Function: LocateUke
+     * -------------------
+     * this function will have the Uke object locate the Uke.
+     */
+    void LocateUke () {
+        return;
+    }
+    
+    /* Function: DetermineFingering
+     * ----------------------------
+     * this function will track the uke and determine the fingering...
+     */
+    void DetermineFingering () {
+        return;
+    }
+    
+    
+    /* Function: destructor
+     * --------------------
+     */
+    ~Virtualele () {
+    }
+    
     
 };
 

@@ -11,7 +11,7 @@
 
 #define LARGEST_RES_WIDTH 176
 #define LARGEST_RES_HEIGHT 164
-#define SMALLEST_RES_WIDTH 54
+#define SMALLEST_RES_WIDTH 53
 #define RES_STEP 3
 
 
@@ -55,18 +55,21 @@ public:
         
         int totalSum = 0;
         
+        char *imagePosition = currentFrame->imageData + x*currentFrame->widthStep + y;
+        char *templatePosition = currentTemplate->imageData;
+        
         for (int i=0;i<currentTemplate->rows;i++) {
             for (int j=0;j<currentTemplate->cols;j++) {
                 
-                
-                totalsum += 
-                
+                totalSum += (int) pow( (*(imagePosition + j) - *(templatePosition + j), 2);
             }
+            imagePosition += currentFrame->widthStep;
+            templatePosition += templateFrame->widthSTep;
         }
    
-            
+        return totalSum;
     }
-    
+
     
     /* Function: GenerateMatchMatrix 
      * -----------------------------
@@ -77,11 +80,13 @@ public:
     void GenerateMatchMatrix (IplImage * currentFrame, int index) {
         CVMat       *currentMatchMatrix = matchMatrices [i];
         IplImage    *currentTemplate = BoundaryMarkerImages [i];
+        char        * writeLocation = (char*) matchMatrices[i]->data;
         
         for (int i=0;i<currentMatchMatrix->rows;i++) {
             for (int j=0;j<currentMatchMatrix->cols;j++) {
-             
-                currentMatchMatrix[i,j] = GetSummedSquaredDifference (currentFrame, currentTemplate, int i, int j);
+                
+                *writeLocation = GetSummedSquaredDifference (currentFrame, currentTemplate, int i, int j);
+                writeLocation += sizeof(char);
                 
             }
         }
@@ -112,7 +117,7 @@ public:
         BoundaryMarkerImages = new IplImage[numOfBoundaryMarkerImages];
         for (int i = LARGEST_RES_WIDTH; i > SMALLEST_RES_WIDTH; i = i - 3) {
             int height = i * LARGEST_RES_HEIGHT / LARGEST_RES_WIDTH;
-             BoundaryMarkerImages[i] = cvCreateImage(CvSize(i, height), IPL_DEPTH_8U, 1);
+            BoundaryMarkerImages[i] = cvCreateImage(CvSize(i, height), IPL_DEPTH_8U, 1);
             cvResize(fullSizeTemplate,  BoundaryMarkerImages[i], 1);
         }
         
