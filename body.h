@@ -11,7 +11,7 @@ using namespace std;
 using namespace cv;
 
 #define OFFSET_FACTOR 0.2
-#define STRUM_THRESHOLD 800
+#define STRUM_THRESHOLD 1700
 
 class Body {
 public:
@@ -26,13 +26,13 @@ public:
         Point center;
         if (bmCenter1.x < bmCenter2.x) {
             
-            center.x = bmCenter1.x - 50;
+            center.x = bmCenter1.x - 180;
             center.y = bmCenter1.y;
             //center.x = bmCenter1.x + x_offset;
             //center.y = bmCenter1.y - y_offset;
         }
         else {
-            center.x = bmCenter2.x - 50;
+            center.x = bmCenter2.x - 180;
             center.y = bmCenter2.y;
         }
         
@@ -45,12 +45,19 @@ public:
         boundingBox.width = size;
         boundingBox.height = size;
         
-        cout << "boundgBox.x, y, width, height = " << boundingBox.x << ", " << boundingBox.y << ", " << boundingBox.width << ", " << boundingBox.height << "\n";
+        //cout << "boundgBox.x, y, width, height = " << boundingBox.x << ", " << boundingBox.y << ", " << boundingBox.width << ", " << boundingBox.height << "\n";
         
-        previousImage = cvCloneImage (currentImage);
-        cvSetImageROI(currentFrame, boundingBox);
-        cvCopy (currentFrame, currentImage);
-        cvResetImageROI (currentFrame);;
+        if ((boundingBox.x + boundingBox.width >= currentFrame->width) || (boundingBox.x < 0) || (boundingBox.y < 0) || (boundingBox.y + boundingBox.height >= currentFrame->height) ) {
+            previousImage = cvCloneImage (currentImage);
+        }
+        else {
+            previousImage = cvCloneImage (currentImage);
+            cvSetImageROI(currentFrame, boundingBox);
+            cvCopy (currentFrame, currentImage);
+            cvResetImageROI (currentFrame);
+        }
+        
+        isActive ();
     }
     
     bool isActive () {
@@ -63,7 +70,7 @@ public:
             for (int i=0;i<currentImage->height;i++) {
                 for (int j=0;j<currentImage->width;j++) {
                 
-                    if (*(curRead + j*3) != *(prevRead+j*3)) {
+                    if ( (*(curRead + j*3) > *(prevRead+j*3) + 10) || (*(curRead + j*3) < *(prevRead+j*3) - 10) ) {
                         total++;
                     }
                 
@@ -74,7 +81,10 @@ public:
         
             cout << "strum total = " << total << "\n";
         
-            if (total > STRUM_THRESHOLD) return true;
+            if (total > STRUM_THRESHOLD) {
+                cout << "# # # # # # # # # # # # # # STRUM # # # # # # # # # ## # \n";
+                return true;
+            }
             else return false;
         }
         else return false;
