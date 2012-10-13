@@ -40,17 +40,20 @@ private:
     
 public:
     
+    bool isCalibrated;
     
     /* Function: UpdateBoundaryMarkers 
      * -------------------------------
      * given the stats from FindBoundaryMarkers, this function will set the initial parameters in the boundarymarker objects.
      * this function should be used during DETECTION, not during tracking.
      */
-    void SetBoundaryMarkers (    Point White, int resolution_white, int dimension_white,
-                                 Point Black, int resolution_black, int dimension_black) {
-        boundaryMarker_black.Set (White, resolution_white, dimension_white);
-        boundaryMarker_white.Set (Black, resolution_black, dimension_black);
+    void SetBoundaryMarkers (    IplImage *whiteTemplate, Point whiteCorner,
+                                 IplImage *blackTemplate, Point blackCorner) {
+        boundaryMarker_white.Set (whiteTemplate, whiteCorner);
+        boundaryMarker_black.Set (blackTemplate, blackCorner);
     }
+    
+    
     
     /* Function: UpdateBoundaryMarkers
      * -------------------------------
@@ -66,7 +69,11 @@ public:
         
     }
     
-    
+    /* Function: DrawUkeFrame
+     * ----------------------
+     * Draws the 2 rectangles around our targets and also puts a line in-between them
+     * Also tries to put the circles 
+     */
     
     void DrawUkeFrame (IplImage *testImage) {
         Mat testImageMat (testImage);
@@ -103,7 +110,7 @@ public:
         }
         
         IplImage newImage = testImageMat;
-        
+        cvShowImage("MAIN_DISPLAY", &newImage);
         
     }
     
@@ -148,8 +155,9 @@ public:
 
         }
         
-        SetBoundaryMarkers ( bestMatch_white, bestMatchResolution_white, BoundaryMarkerImages_White[bestMatchResolution_white]->width,
-                               bestMatch_black, bestMatchResolution_black, BoundaryMarkerImages_Black[bestMatchResolution_black]->width);
+        
+        SetBoundaryMarkers (    BoundaryMarkerImages_White[bestMatchResolution_white], bestMatch_white, 
+                                BoundaryMarkerImages_Black[bestMatchResolution_black], bestMatch_black);
     }
     
     
@@ -166,16 +174,14 @@ public:
         cv::Point minLoc_black, maxLoc_black;
         
         cvSetImageROI (currentFrame, boundaryMarker_white.scanRegion);
-
-        GenerateMatchMatrix (currentFrame, BoundaryMarkerImages_White [boundaryMarker_white.resolutionIndex], boundaryMarker_white.matchMatrix);
-
+        GenerateMatchMatrix (currentFrame, boundaryMarker_white.bmTemplate, boundaryMarker_white.matchMatrix);
         minMaxLoc(*boundaryMarker_white.matchMatrix, &min_white, &max_white, &minLoc_white, &maxLoc_white, Mat());
         Point newLocation_white;
         newLocation_white.x = minLoc_white.x + boundaryMarker_white.scanRegion.x;
         newLocation_white.y = minLoc_white.y + boundaryMarker_white.scanRegion.y;
         
         cvSetImageROI (currentFrame, boundaryMarker_black.scanRegion);
-        GenerateMatchMatrix (currentFrame, BoundaryMarkerImages_Black [boundaryMarker_black.resolutionIndex], boundaryMarker_black.matchMatrix);
+        GenerateMatchMatrix (currentFrame, boundaryMarker_black.bmTemplate, boundaryMarker_black.matchMatrix);
         minMaxLoc(*boundaryMarker_black.matchMatrix, &min_black, &max_black, &minLoc_black, &maxLoc_black, Mat());
         Point newLocation_black;
         newLocation_black.x = minLoc_black.x + boundaryMarker_black.scanRegion.x;
@@ -194,13 +200,22 @@ public:
      */
     void GenerateMatchMatrix (IplImage * scanImage, IplImage* templateImage, Mat *resultMat) {
         
+        
+        /*speed it up - take care of the template initially*/
         Mat scanImageMat (scanImage);
         Mat scanImageMatGray;
+        Mat templateImageMat (templateImage);
         
         cvtColor (scanImageMat, scanImageMatGray, CV_RGB2GRAY);
         
-        Mat templateImageMat (templateImage);
-        matchTemplate (scanImageMatGray, templateImageMat, *resultMat, CV_TM_SQDIFF_NORMED);
+        if (isCalibrated) {
+            Mat templateImageMatGray;
+            cvtColor (templateImageMat, templateImageMatGray, CV_RGB2GRAY);
+            matchTemplate (scanImageMatGray, templateImageMatGray, *resultMat, CV_TM_SQDIFF_NORMED);
+        }
+        else {
+            matchTemplate (scanImageMatGray, templateImageMat, *resultMat, CV_TM_SQDIFF_NORMED);
+        }
         
     }
     
@@ -209,8 +224,20 @@ public:
     
     /* Function: GrabBoundaryMarkerTemplates 
      * -------------------------------------
-     * this function will fill up 
+     */
+    void GrabBoundaryMarkerTemplates (IplImage * currentFrame) {
+        boundaryMarker_white.SetBmTemplate (currentFrame);
+        boundaryMarker_black.SetBmTemplate (currentFrame);
+    }
     
+    /* Function: GrabInactiveKeyTemplates
+     * ----------------------------------
+     */
+//    void GrabInactiveKeyTemplates (IplImage * currentFrame) {
+//        for (int i=0;i<3;i++) {
+//            keys[i]->setInactiveTemplate (currentFrame);
+//        }
+//    }
     
     
     

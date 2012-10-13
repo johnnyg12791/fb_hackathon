@@ -30,31 +30,31 @@ public:
      * -------------------
      * this function will have the Uke object locate the Uke. returns 1 when it works, 0 otherwise.
      */
-    int DetectUke () {
+    void DetectUke () {
+        uke->isCalibrated = false;
         uke->DetectBoundaryMarkers (currentFrame);
-        uke->DrawUkeFrame (currentFrame);
     }
     
-    int DetectUke (IplImage *testImage) {
+    void DetectUke (IplImage *testImage) {
         uke->DetectBoundaryMarkers (testImage);
-        uke->DrawUkeFrame (testImage);
     }
     
-    int TrackUke () {
+    void TrackUke () {
         uke->TrackBoundaryMarkers (currentFrame);
-        uke->DrawUkeFrame (currentFrame);
     }
     
     void CalibrateUke () {
-        uke->GrabBoundaryMarkerTemplates ();
-        uke->GrabInactiveKeyTemplates ();
-        int key = 0;
-        while (key != 'c') {
-            GetNextFrame ();
-            DisplayFrame ();
-            key = cvWaitKey(30);
-        }
-        uke->GrabActiveKeyTemplates ();
+        uke->isCalibrated = true;
+        uke->GrabBoundaryMarkerTemplates (currentFrame);
+        
+        //uke->GrabInactiveKeyTemplates ();
+        //int key = 0;
+        //while (key != 'c') {
+        //    GetNextFrame ();
+        //    DisplayFrame ();
+        //    key = cvWaitKey(30);
+        //}
+        //uke->GrabActiveKeyTemplates ();
     }
     
     
@@ -91,10 +91,12 @@ public:
      * ----------------------
      * this function will display 'currentFrame' on the main display.
      */
-    void DisplayFrame () {
+    void DisplayFrameRegular () {
         cvShowImage (mainDisplayName, currentFrame);
     }
-    
+    void DisplayFrameMarked () {
+        uke->DrawUkeFrame (currentFrame);
+    }
     
     
     /* Function: constructor

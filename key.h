@@ -18,10 +18,11 @@ using namespace cv;
 class Key {
 public:
     
-    IplImage *activeImage, *inactiveImage;
+    IplImage *activeKeyTemplate, *inactiveKeyTemplate;
     
     float scaleFactor;
     Point location;
+    CvRect boundingBox;
     int radius;
     
     /* Function: UpdatePosition
@@ -34,6 +35,34 @@ public:
         int y_offset = (white.y - black.y)*scaleFactor/100;
         location.x = black.x + x_offset;
         location.y = black.y + y_offset;
+        
+        boundingBox.x = location.x - radius;
+        boundingBox.y = location.y - radius;
+        boundingBox.width = radius*2;
+        boundingBox.height = radius*2;
+    }
+    
+    
+    /* Function: GrabInactiveKeyTemplates
+     * ----------------------------------
+     * given the coordinates of the two boundary markers, this function will set the value of
+     * 'location.'
+     */
+    void GrabInactiveKeyTemplate (IplImage * currentFrame) {
+        cvSetImageROI (currentFrame, boundingBox);
+        inactiveKeyTemplate = cvCloneImage(currentFrame);
+        cvResetImageROI (currentFrame);
+    }
+    
+    /* Function: GrabActiveKeyTemplates
+     * ----------------------------------
+     * given the coordinates of the two boundary markers, this function will set the value of
+     * 'location.'
+     */
+    void GrabActiveKeyTemplate (IplImage * currentFrame) {
+        cvSetImageROI (currentFrame, boundingBox);
+        activeKeyTemplate = cvCloneImage(currentFrame);
+        cvResetImageROI (currentFrame);
     }
     
     

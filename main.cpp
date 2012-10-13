@@ -31,6 +31,7 @@ int main () {
     int key = 0;
     bool currentlyTracking = false;
     while (true) {
+        virtualele.GetNextFrame ();
         key = cvWaitKey (30);
         if (key == 'r') {
             virtualele.DetectUke ();
@@ -40,31 +41,14 @@ int main () {
             virtualele.CalibrateUke ();
         }
         else if (key == ' ') {
-            return;
+            return 0;
         }
         else {
             if (currentlyTracking) virtualele.TrackUke ();
         }
+        
+        if (currentlyTracking) virtualele.DisplayFrameMarked ();
+        else virtualele.DisplayFrameRegular ();
     }
-    
-    
-    /*### Routine #1: find the ukulele ###*/
-//    int found = 0;
-//    while (!found) {
-    
-    int found = virtualele.DetectUke ();
-    //cvShowImage ("MAIN_DISPLAY", testImage);
-    virtualele.DisplayFrame ();
-    /*### Routine #2: track and play ###*/
-    
-    
-    int key = 0;
-    while (key != 'q') {
-        virtualele.GetNextFrame ();
-        virtualele.TrackUke();
-        virtualele.DisplayFrame ();
-        key = cvWaitKey(30);
-    }
-
-  return 0;
+    return 0;
 }

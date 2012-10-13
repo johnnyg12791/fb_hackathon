@@ -16,6 +16,8 @@ using namespace cv;
 class BoundaryMarker {
 public:
     
+    IplImage *bmTemplate;
+    
     /*the boundary itself*/
     Point topLeft;
     Point bottomRight;
@@ -60,37 +62,31 @@ public:
         if (scanRegion.y + scanRegion.height >= imageHeight) {
             scanRegion.height = imageHeight - scanRegion.y - 1;
         }
-        
-        /*
-        scanTopLeft.x = center.x - SCAN_RATIO*width/2;
-        scanTopLeft.y = center.y - SCAN_RATIO*height/2;
-        scanBottomRight.x = center.x + SCAN_RATIO*width/2;
-        scanBottomRight.y = center.y + SCAN_RATIO*height/2;
-         */
-        /*
-        if (scanTopLeft.x < 0) scanTopLeft.x = 0;
-        if (scanTopLeft.y < 0) scanTopLeft.y = 0;
-        
-        if (scanBottomRight.x >= imageWidth) scanBottomRight.x = imageWidth - 1;
-        if (scanBottomRight.y >= imageHeight) scanBottomRight.y = imageHeight - 1;
-         */
-        
     }
     
-    void Set (Point tLeft, int r_index, int dimension) {
-        resolutionIndex = r_index;
-        width = dimension;
-        height = dimension;
+    
+    /* Function: Set
+     * -------------
+     * The client supplies this function with the image of the template that detected it and the coordinates of
+     * the top left corner where it was located. 
+     */
+    void Set (IplImage *temporaryTemplate, Point tLeft) {
+
+        bmTemplate = cvCloneImage (temporaryTemplate);
+        width = bmTemplate->width;
+        height = bmTemplate->height;
         topLeft.x = tLeft.x;
         topLeft.y = tLeft.y;
         bottomRight.x = topLeft.x + width;
         bottomRight.y = topLeft.y + height;
         UpdateCenter ();
         CalculateScanRegion ();
-        
         matchMatrix = new Mat (scanRegion.width - width + 1, scanRegion.height - height + 1, CV_8UC1);
         
     }
+    
+    
+    
     
     void Update (Point tLeft) {
         topLeft.x = tLeft.x;
@@ -101,6 +97,19 @@ public:
         UpdateCenter ();
         CalculateScanRegion ();
     }
+    
+    /* Function: SetBmTemplate
+     * -----------------------
+     * this function accepts the current frame and extracts from it it's own image.
+     */
+    void SetBmTemplate (IplImage *currentFrame) {
+        cvSetImageROI (currentFrame, cvRect (topLeft.x, topLeft.y, width, height));
+        bmTemplate = cvCloneImage(currentFrame);
+        cvResetImageROI (currentFrame);
+    }
+    
+    
+    
     
     void init (int Height, int Width) {
         imageHeight = Height;
