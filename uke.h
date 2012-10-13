@@ -4,6 +4,7 @@
 #include <iostream>
 #include <stdlib.h>
 #include <stdio.h>
+#include <math.h>
 
 /*for opencv*/
 #include <opencv2/opencv.hpp>
@@ -13,6 +14,50 @@
 #define RES_STEP 3
 
 using namespace std;
+
+
+class MatchMatrix {
+private:
+    int ** matrix;
+    int rows;
+    int cols;
+    
+public:
+    
+    int GetRows () {
+        return rows;
+    }
+    int GetCols () {
+        return cols;
+    }
+    
+    void SetEntry (int i, int j, int val) {
+        assert ( ((i >= 0) && (i < rows)) && ((j >= 0) && (j < cols)) );
+        matrix [i][j] = val;
+    }
+    
+    MatchMatrix () {
+    }
+    MatchMatrix (int r, int c) {
+        rows = r;
+        cols = c;
+        matrix = new int* [rows];
+        for (int i=0;i<rows;i++) {
+            matrix [i] = new int [cols];
+        }
+    }
+    
+    ~MatchMatrix () {
+        for (int i=0;i<rows;i++) {
+            delete matrix [i];
+        }
+        delete matrix;
+    }
+
+};
+
+
+
 
 class Uke {
 private:
@@ -25,7 +70,7 @@ private:
     
     
     /*the match matrices*/
-    CvMat **matchMatrices;
+    MatchMatrix **matchMatrices;
     int numOfMatchMatrices;
     
 public:
@@ -50,7 +95,7 @@ public:
      * as the coordinates within the image at which we are calculating, this function will return
      * the summed-squared-difference between the template and that image region.
      */
-    /*
+
     int GetSummedSquaredDifference (IplImage *currentFrame, IplImage *currentTemplate, int x, int y) {
         
         int totalSum = 0;
@@ -61,7 +106,7 @@ public:
         for (int i=0;i<currentTemplate->width;i++) {
             for (int j=0;j<currentTemplate->height;j++) {
                 
-	      totalSum += (int) pow( (*(imagePosition + j) - *(templatePosition + j)), 2);
+                totalSum += pow( (float) (*(imagePosition + j) - *(templatePosition + j)) , 2);
             }
             imagePosition += currentFrame->widthStep;
             templatePosition += currentTemplate->widthStep;
@@ -69,7 +114,6 @@ public:
    
         return totalSum;
     }
-    */
     
     /* Function: GenerateMatchMatrix 
      * -----------------------------
@@ -77,24 +121,20 @@ public:
      * use, this function will scan that match template over the entire image and 
      * fill the appropriate member of 'matchMatrices'
      */
-    /*
     void GenerateMatchMatrix (IplImage * currentFrame, int index) {
-        CvMat       *currentMatchMatrix = matchMatrices [index];
+        MatchMatrix *currentMatchMatrix = matchMatrices [index];
         IplImage    *currentTemplate = BoundaryMarkerImages [index];
-        char        * writeLocation = (char*) matchMatrices[index]->data;
         
-        for (int i=0;i<currentMatchMatrix->rows;i++) {
-            for (int j=0;j<currentMatchMatrix->cols;j++) {
+        for (int i=0;i<currentMatchMatrix->GetRows();i++) {
+            for (int j=0;j<currentMatchMatrix->GetCols();j++) {
                 
-                *writeLocation = GetSummedSquaredDifference (currentFrame, currentTemplate, int i, int j);
-                writeLocation += sizeof(char);
+                currentMatchMatrix->SetEntry(i, j, GetSummedSquaredDifference (currentFrame, currentTemplate, i, j));
                 
             }
         }
         
         
     }
-    */
     
     
     /* Function: InitMatchMatrices
@@ -106,14 +146,13 @@ public:
     void InitMatchMatrices (IplImage *targetImage) {
         int width = targetImage->width;
         int height = targetImage->height;
-        matchMatrices = new CvMat* [numOfBoundaryMarkerImages];
+        matchMatrices = new MatchMatrix* [numOfBoundaryMarkerImages];
         for (int i = 0; i < numOfBoundaryMarkerImages; i++) {
-            int rows = width - BoundaryMarkerImages[i]->width + 1;
-            int cols = height - BoundaryMarkerImages[i]->height + 1;
-            matchMatrices[i] = cvCreateMat(rows, cols, CV_32SC1);
+            int rows = (width - BoundaryMarkerImages[i]->width) + 1;
+            int cols = (height - BoundaryMarkerImages[i]->height) + 1;
+            matchMatrices[i] = new MatchMatrix (rows, cols);
         }
         numOfMatchMatrices = numOfBoundaryMarkerImages;
-        
     }
     
     
@@ -125,8 +164,6 @@ public:
      */
     void InitBoundaryMarkerImages (IplImage *fullSizeTemplate) {
         
-        cout << "# # # INIT BOUNDARY MARKER IMAGES # # # \n";
-        
         int largestResWidth = fullSizeTemplate->width;
         int numOfBoundaryMarkerImages = (largestResWidth - SMALLEST_RES_WIDTH) / 3;
         BoundaryMarkerImages = new IplImage *[numOfBoundaryMarkerImages];
@@ -136,8 +173,6 @@ public:
             
             cout << i << "th boundary image: width, height = " << BoundaryMarkerImages[i]->width << ", " << BoundaryMarkerImages[i]->height << "\n";
         }
-        
-        cout << "# # # # END # # # # \n";
      
     }
     
@@ -166,7 +201,7 @@ public:
         delete BoundaryMarkerImages;
         
         for (int i = 0; i < numOfMatchMatrices; i++) {
-            cvReleaseMat(&matchMatrices[i]);
+            delete matchMatrices [i];
         }
         delete matchMatrices;
     }
