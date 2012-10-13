@@ -21,16 +21,16 @@ int main () {
 
     IplImage *fullResTemplate = cvLoadImage (FULL_RES_TEMPLATE_NAME, CV_LOAD_IMAGE_GRAYSCALE);
     Virtualele virtualele ("MAIN_DISPLAY", fullResTemplate);
-
-    virtualele.scan_test ("test.bmp");
-    
     
     
     /*### Routine #1: find the ukulele ###*/
-    int found = 0;
-    while (!found) {
-        found = virtualele.LocateUke ();
-    }
+//    int found = 0;
+ //   while (!found) {
+    
+    cout << "before found\n";
+    int found = virtualele.LocateUke ();
+    cout << "after found\n";
+    // }
     
 
     /*### Routine #2: track and play ###*/

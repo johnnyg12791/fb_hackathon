@@ -10,65 +10,31 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
-#define SMALLEST_RES_WIDTH 53
+#define SMALLEST_RES_WIDTH 92
 #define RES_STEP 3
 
 using namespace std;
+using namespace cv;
 
 
 class MatchMatrix {
-private:
-    int ** matrix;
-    int rows;
-    int cols;
-    CvPoint GlobalMax;
-    int GlobalMaxValue;
-    
 public:
+    cv::Mat matrix;
+    CvPoint globalMax;
+    int globalMaxVal;
     
-    int GetRows () {
-        return rows;
-    }
-    int GetCols () {
-        return cols;
-    }
-    
-    void SetEntry (int i, int j, int val) {
-        assert ( ((i >= 0) && (i < rows)) && ((j >= 0) && (j < cols)) );
-        matrix [i][j] = val;
-        if (val > GlobalMaxValue) {
-            GlobalMaxValue = val;
-            GlobalMax.x = i;
-            GlobalMax.y = j;
-        }
-            
-    }
     
     CvPoint GetGlobalMax () {
-        return GlobalMax;
+        return globalMax;
     }
     
     MatchMatrix () {
     }
     MatchMatrix (int r, int c) {
-        rows = r;
-        cols = c;
-        matrix = new int* [rows];
-        for (int i=0;i<rows;i++) {
-            matrix [i] = new int [cols];
-        }
+        matrix.create (r, c, CV_8U);
+        globalMaxVal = -1;
     }
-    
-    ~MatchMatrix () {
-        for (int i=0;i<rows;i++) {
-            delete matrix [i];
-        }
-        delete matrix;
-    }
-
 };
-
-
 
 
 class Uke {
@@ -93,110 +59,63 @@ public:
      */
     void FindBoundaryMarkers (IplImage *currentFrame) {
     
-      //        for (int i=0;i<NUM_OF_TEMPLATES;i++) {
-      //    GenerateMatchMatrix (currentFrame, i);
-      //}
+        
+        CvPoint bestMatchMaxLoc, bestMatchMinLoc;
+        int bestMatchMinVal = 10000, bestMatchMaxVal = -1;
+        int bestMatchResolution = -1;
         
         
-    }
-    
-    
-    IplImage * scan_test (IplImage *testImage) {
-        GenerateMatchMatrix (testImage, 0);
-        IplImage *resultImage = cvCloneImage (testImage);
-        
-        CvRect result = cvRect (matchMatrices[0]->GetGlobalMax().x, matchMatrices[0]->GetGlobalMax().y, BoundaryMarkerImages[0]->width, BoundaryMarkerImages[0]->height);
-        cvRectangle (resultImage, cvPoint(result.x, result.y), cvPoint(result.x + result.width, result.y + result.height), cvScalar( 0, 0, 0), 3, 8);
-        
-        cvShowImage( "MAIN_DISPLAY", resultImage);
-        int key = 0;
-        while (key != 'q') {
-            key = cvWaitKey (30);
+        for (int i=0;i<numOfBoundaryMarkerImages;i++) {
+            cout << "# # # i = " << i << " # # # \n";
+            double min = 100000, max = 0;
+            cv::Point minLoc, maxLoc;
+            GenerateMatchMatrix (currentFrame, BoundaryMarkerImages[i], matchMatrices[i]);
+            minMaxLoc (matchMatrices[i]->matrix, &min, &max, &minLoc, &maxLoc, Mat());
+            
+            /*note: this isnt guaranteed to work... but in a constrained environment, we hope it will.*/
+            if ((min < bestMatchMinVal) && (max > bestMatchMaxVal)) {
+                bestMatchMinVal = min;
+                bestMatchMaxVal = max;
+                bestMatchMaxLoc.x = maxLoc.x;
+                bestMatchMaxLoc.y = maxLoc.y;
+                bestMatchMinLoc.x = minLoc.x;
+                bestMatchMinLoc.y = minLoc.y;
+                cout << "best match updated!\n";
+            }
         }
-        return resultImage;
+        
         
     }
             
                     
-                    
-    /* Function: GetSummedSquaredDifference
-     * ------------------------------------
-     * given the current frame and the index of the template that we are using, as well
-     * as the coordinates within the image at which we are calculating, this function will return
-     * the summed-squared-difference between the template and that image region.
-     */
-
-    int GetSummedSquaredDifference (IplImage *currentFrame, IplImage *currentTemplate, int x, int y) {
-        cout << "Started GetSummedSquaredDifference" << endl;
-        int totalSum = 0;
-        
-        cvShowImage( "MAIN_DISPLAY", currentFrame);
-        int key = 0;
-        while (key != 'q') {
-            key = cvWaitKey (30);
-        }
-        
-        cvShowImage( "MAIN_DISPLAY", currentTemplate);
-        
-        key = 0;
-        while (key != 'q') {
-            key = cvWaitKey (30);
-        }
-        
-        char *imagePosition = currentFrame->imageData + x *currentFrame->widthStep + y;
-        char *templatePosition = currentTemplate->imageData;
-        cout << "CurrentTemplate->width: " << currentTemplate->width << ", height: " << "CurrentTemplate->height: " << currentTemplate->height << endl;
-        for (int i=0;i<currentTemplate->width;i++) {
-            for (int j=0;j<currentTemplate->height;j++) {
-                
-                totalSum += pow( (float) (*(imagePosition + j) - *(templatePosition + j)) , 2);
-                cout << "totalSum = " << totalSum << endl;
-            }
-            imagePosition += currentFrame->widthStep;
-            templatePosition += currentTemplate->widthStep;
-        }
-        cout << "Finished GetSummedSquaredDifference" << endl;
-        return totalSum;
-    }
+  
     
-    /* Function: GenerateMatchMatrix 
+    /* Function: GenerateMatchMatrix
      * -----------------------------
-     * given the current frame and the 'resolution index' of the match template to 
-     * use, this function will scan that match template over the entire image and 
-     * fill the appropriate member of 'matchMatrices'
+     * given a region of an image to scan over (scanImage), and a template to scan with (templageImage), this function will
+     * fill out the matrix 'resultMat' so that it reflects the summed-squared-difference.
      */
-    void GenerateMatchMatrix (IplImage * currentFrame, int index) {
-        cout << "Started generating MatchMatrix" << endl;
-
+    void GenerateMatchMatrix (IplImage * scanImage, IplImage* templateImage, MatchMatrix *resultMat) {
         
-
-        
-        MatchMatrix *currentMatchMatrix = matchMatrices [index];
-        IplImage    *currentTemplate = BoundaryMarkerImages [index];
-        
-        cvShowImage( "MAIN_DISPLAY", currentTemplate);
-        int key = 0;
-        while (key != 'q') {
-            key = cvWaitKey (30);
-        }
-        
-        cout << "worked" << endl;
-
-
-        for (int i=0;i<currentMatchMatrix->GetRows();i++) {
-            for (int j=0;j<currentMatchMatrix->GetCols();j++) {
-                cout << "i: " << i << ", j: " << j << endl;
-
-                currentMatchMatrix->SetEntry(i, j, GetSummedSquaredDifference (currentFrame, currentTemplate, i, j));
-                
-            }
-        }
-        cout << "Finished generating MatchMatrix" << endl;
-
+        Mat scanImageMat (scanImage);
+        Mat scanImageMatGray;
+        cvtColor (scanImageMat, scanImageMatGray, CV_RGB2GRAY);
+        Mat templateImageMat (templateImage);
+        matchTemplate (scanImageMatGray, templateImageMat, resultMat->matrix, CV_TM_SQDIFF_NORMED);
         
     }
-
     
+    
+    IplImage * scan_test (IplImage *testImage, IplImage * templateImage) {
+        MatchMatrix* resultMat = new MatchMatrix (10, 10);
+        GenerateMatchMatrix (testImage, templateImage, resultMat);
+        double min = 100000, max = 0;
+        cv::Point minLoc, maxLoc;
+        Mat testMat ();
+        cout << "HERE\n";
+        minMaxLoc (resultMat->matrix, &min, &max, &minLoc, &maxLoc, Mat());
+        
+    }    
     
     /* Function: InitMatchMatrices
      * ---------------------------
@@ -227,19 +146,13 @@ public:
         
         int largestResWidth = fullSizeTemplate->width;
         cout << "largestResWidth: " << largestResWidth << endl;
-        int numOfBoundaryMarkerImages = (largestResWidth - SMALLEST_RES_WIDTH + 1) / 3;
+        numOfBoundaryMarkerImages = (largestResWidth - SMALLEST_RES_WIDTH + 1) / 3;
         BoundaryMarkerImages = new IplImage *[numOfBoundaryMarkerImages];
-        for (int i = largestResWidth; i > SMALLEST_RES_WIDTH; i = i - RES_STEP) {
+        for (int i = largestResWidth, j = 0; i > SMALLEST_RES_WIDTH; i = i - RES_STEP, j++) {
             cout << "i: " << i << endl;
-            BoundaryMarkerImages[i] = cvCreateImage(cvSize(i, i), IPL_DEPTH_8U, 1);
-            cvResize(fullSizeTemplate,  BoundaryMarkerImages[i], 1);
-            cvShowImage( "MAIN_DISPLAY", BoundaryMarkerImages[i]);
-            int key = 0;
-            while (key != 'q') {
-                key = cvWaitKey (30);
-            }
-
-            cout << i << "th boundary image: width, height = " << BoundaryMarkerImages[i]->width << ", " << BoundaryMarkerImages[i]->height << "\n";
+            BoundaryMarkerImages[j] = cvCreateImage(cvSize(i, i), IPL_DEPTH_8U, 1);
+            cvResize(fullSizeTemplate,  BoundaryMarkerImages[j], 1);
+            cout << i << "th boundary image: width, height = " << BoundaryMarkerImages[j]->width << ", " << BoundaryMarkerImages[j]->height << "\n";
         }
      
     }
@@ -257,8 +170,13 @@ public:
     Uke (IplImage *currentFrame, IplImage *fullSizeTemplate) {
         numOfBoundaryMarkerImages = 0;
         numOfMatchMatrices = 0;
+        cout << "BEFORE " << endl;
         InitBoundaryMarkerImages(fullSizeTemplate);
+        cout << "AFTER " << endl;
+
         InitMatchMatrices (currentFrame);
+        
+        
         
     }
     

@@ -17,6 +17,8 @@ private:
     IplImage * currentFrame;
     char * mainDisplayName;
     
+    IplImage *fullResTemplate;
+    
     Uke *uke;
     
 public:
@@ -45,17 +47,20 @@ public:
     
     int scan_test (char * testImageName) {
         IplImage *testImage = cvLoadImage (testImageName, CV_LOAD_IMAGE_GRAYSCALE);
-        IplImage * testResult = uke->scan_test (testImage);
+        IplImage * testResult = uke->scan_test (testImage, fullResTemplate);
         
     }
     
     
     /* Function: LocateUke
      * -------------------
-     * this function will have the Uke object locate the Uke.
+     * this function will have the Uke object locate the Uke. returns 1 when it works, 0 otherwise.
      */
     int LocateUke () {
-        return 0;
+        
+        uke->FindBoundaryMarkers (currentFrame);
+        return 1;
+        
     }
     
     /* Function: DetermineFingering
