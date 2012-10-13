@@ -66,7 +66,7 @@ public:
      * ----------------------------
      * this function will track the uke and determine the fingering...
      */
-    int DetermineFingering () {
+    void DetermineFingering () {
         uke->DetermineFingering (currentFrame);
     }
     
