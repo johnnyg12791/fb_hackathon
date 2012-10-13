@@ -19,6 +19,8 @@ private:
     
     IplImage *fullResTemplate;
     
+    IplImage *displayFrame;
+    
     Uke *uke;
     
 public:
@@ -46,19 +48,16 @@ public:
     void CalibrateUke () {
         uke->isCalibrated = true;
         uke->GrabBoundaryMarkerTemplates (currentFrame);
-        
-        //uke->GrabInactiveKeyTemplates ();
-        //int key = 0;
-        //while (key != 'c') {
-        //    GetNextFrame ();
-        //    DisplayFrame ();
-        //    key = cvWaitKey(30);
-        //}
-        //uke->GrabActiveKeyTemplates ();
+        uke->GrabInactiveKeyTemplates (currentFrame);
+        int key = 0;
+        while (key != 'c') {
+            GetNextFrame ();
+            TrackUke ();
+            DisplayFrameMarked ();
+            key = cvWaitKey(30);
+        }
+        uke->GrabActiveKeyTemplates (currentFrame);
     }
-    
-    
-    
     
     
     
@@ -68,11 +67,8 @@ public:
      * this function will track the uke and determine the fingering...
      */
     int DetermineFingering () {
-        return 0;
+        uke->DetermineFingering (currentFrame);
     }
-    
-    
-    
     
     
     
@@ -83,7 +79,7 @@ public:
     void GetNextFrame () {
         cvGrabFrame (capture);
         currentFrame = cvRetrieveFrame (capture);
-        //cvCvtColor (currentFrame, currentFrame, CV_BGR2GRAY);
+        displayFrame = cvCloneImage(currentFrame);
     }
     
     
@@ -92,10 +88,10 @@ public:
      * this function will display 'currentFrame' on the main display.
      */
     void DisplayFrameRegular () {
-        cvShowImage (mainDisplayName, currentFrame);
+        cvShowImage (mainDisplayName, displayFrame);
     }
     void DisplayFrameMarked () {
-        uke->DrawUkeFrame (currentFrame);
+        uke->DrawUkeFrame (displayFrame);
     }
     
     

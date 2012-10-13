@@ -33,6 +33,7 @@ int main () {
     while (true) {
         virtualele.GetNextFrame ();
         key = cvWaitKey (30);
+        
         if (key == 'r') {
             virtualele.DetectUke ();
             currentlyTracking = true;
@@ -44,7 +45,10 @@ int main () {
             return 0;
         }
         else {
-            if (currentlyTracking) virtualele.TrackUke ();
+            if (currentlyTracking) {
+                virtualele.TrackUke ();
+                virtualele.DetermineFingering ();
+            }
         }
         
         if (currentlyTracking) virtualele.DisplayFrameMarked ();

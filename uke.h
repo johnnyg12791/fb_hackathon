@@ -36,7 +36,7 @@ private:
     int numOfMatchMatrices;
     
     /*the keys*/
-    Key *keys [3];
+    Key *keys [NUM_OF_KEYS];
     
 public:
     
@@ -63,7 +63,7 @@ public:
     void UpdateBoundaryMarkers (Point white_tl, Point black_tl) {
         boundaryMarker_white.Update (white_tl);
         boundaryMarker_black.Update (black_tl);
-        for (int i=0;i<3;i++) {
+        for (int i=0;i<NUM_OF_KEYS;i++) {
             keys[i]->Update (boundaryMarker_white.center, boundaryMarker_black.center);
         }
         
@@ -233,11 +233,20 @@ public:
     /* Function: GrabInactiveKeyTemplates
      * ----------------------------------
      */
-//    void GrabInactiveKeyTemplates (IplImage * currentFrame) {
-//        for (int i=0;i<3;i++) {
-//            keys[i]->setInactiveTemplate (currentFrame);
-//        }
-//    }
+    void GrabInactiveKeyTemplates (IplImage * currentFrame) {
+        for (int i=0;i<NUM_OF_KEYS;i++) {
+            keys[i]->GrabInactiveKeyTemplate (currentFrame);
+        }
+    }
+
+    /* Function: GrabActiveKeyTemplates
+     * ----------------------------------
+     */
+    void GrabActiveKeyTemplates (IplImage * currentFrame) {
+        for (int i=0;i<NUM_OF_KEYS;i++) {
+            keys[i]->GrabActiveKeyTemplate (currentFrame);
+        }
+    }
     
     
     
@@ -288,6 +297,16 @@ public:
     }
     
     
+    
+    void DetermineFingering (IplImage *currentFrame) {
+        if (isCalibrated) {
+            for (int i=0;i<NUM_OF_KEYS;i++) {
+                keys[i]->DetermineActivity (currentFrame);
+            }
+        }
+    }
+    
+    
     /* Function: constructor
      * ---------------------
      * the constructor takes in an IplImage containing the full-sized template; it will 
@@ -310,6 +329,7 @@ public:
         keys[0] = new Key (KEY1_RATIO, KEY_RADIUS);
         keys[1] = new Key (KEY2_RATIO, KEY_RADIUS);
         keys[2] = new Key (KEY3_RATIO, KEY_RADIUS);
+        keys[3] = new Key (KEY4_RATIO, KEY_RADIUS);
         
         
     }
