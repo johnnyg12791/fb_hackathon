@@ -1,5 +1,5 @@
 CC = g++
-OBJS = main.o 
+OBJS = main.o  
 DEBUG = -g
 CFLAGS = -Wall -c $(DEBUG)
 LFLAGS = `pkg-config --cflags opencv`
@@ -7,6 +7,6 @@ OPENCV = `pkg-config --libs opencv`
 
 virtualele: $(OBJS)
 	$(CC) $(LFLAGS) -o virtualele $(OBJS) $(OPENCV)
-main.o: main.cpp virtualele.h
+main.o: main.cpp virtualele.h uke.h
 	$(CC) $(CFLAGS) main.cpp $(OPENCV)
 

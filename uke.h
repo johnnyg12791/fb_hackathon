@@ -9,8 +9,6 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
-#define LARGEST_RES_WIDTH 176
-#define LARGEST_RES_HEIGHT 164
 #define SMALLEST_RES_WIDTH 53
 #define RES_STEP 3
 
@@ -127,13 +125,19 @@ public:
      */
     void InitBoundaryMarkerImages (IplImage *fullSizeTemplate) {
         
-        int numOfBoundaryMarkerImages = (LARGEST_RES_WIDTH - SMALLEST_RES_WIDTH) / 3;
-        BoundaryMarkerImages = new IplImage* [numOfBoundaryMarkerImages];
-        for (int i = LARGEST_RES_WIDTH; i > SMALLEST_RES_WIDTH; i = i - 3) {
-            int height = i * LARGEST_RES_HEIGHT / LARGEST_RES_WIDTH;
-            BoundaryMarkerImages[i] = cvCreateImage(cvSize(i, height), IPL_DEPTH_8U, 1);
+        cout << "# # # INIT BOUNDARY MARKER IMAGES # # # \n";
+        
+        int largestResWidth = fullSizeTemplate->width;
+        int numOfBoundaryMarkerImages = (largestResWidth - SMALLEST_RES_WIDTH) / 3;
+        BoundaryMarkerImages = new IplImage *[numOfBoundaryMarkerImages];
+        for (int i = largestResWidth; i > SMALLEST_RES_WIDTH; i = i - RES_STEP) {
+            BoundaryMarkerImages[i] = cvCreateImage(cvSize(i, i), IPL_DEPTH_8U, 1);
             cvResize(fullSizeTemplate,  BoundaryMarkerImages[i], 1);
+            
+            cout << i << "th boundary image: width, height = " << BoundaryMarkerImages[i]->width << ", " << BoundaryMarkerImages[i]->height << "\n";
         }
+        
+        cout << "# # # # END # # # # \n";
      
     }
     

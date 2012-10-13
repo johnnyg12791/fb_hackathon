@@ -8,6 +8,8 @@
 
 #include "virtualele.h"
 
+
+#define FULL_RES_TEMPLATE_NAME "template.bmp"
 using namespace std;
 
 
@@ -17,7 +19,8 @@ int main () {
     cvNamedWindow ("MAIN_DISPLAY");
     cvResizeWindow ("MAIN_DISPLAY", 640, 640);
 
-    Virtualele virtualele ("MAIN_DISPLAY");
+    IplImage *fullResTemplate = cvLoadImage (FULL_RES_TEMPLATE_NAME, CV_LOAD_IMAGE_GRAYSCALE);
+    Virtualele virtualele ("MAIN_DISPLAY", fullResTemplate);
 
     
     
@@ -39,7 +42,7 @@ int main () {
     }
     
     /*### Delay Until End ###*/
-    int key = 0;
+    key = 0;
     while (key != 'q') {
         virtualele.GetNextFrame ();
         virtualele.DisplayFrame ();

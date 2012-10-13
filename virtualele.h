@@ -4,6 +4,7 @@
 #include <iostream>
 #include <stdlib.h>
 #include <stdio.h>
+#include "uke.h"
 
 /*for opencv*/
 #include <opencv2/opencv.hpp>
@@ -16,19 +17,9 @@ private:
     IplImage * currentFrame;
     char * mainDisplayName;
     
-    Uke uke;
+    Uke *uke;
     
 public:
-    
-    /* Function: constructor
-     * ---------------------
-     * sets up communication with the webcam;
-     */
-    Virtualele (char * newMainDisplayName)
-    {
-        capture = cvCreateCameraCapture (-1);
-        mainDisplayName = newMainDisplayName;
-    }
     
     
     /* Function: GetNextFrame
@@ -38,6 +29,7 @@ public:
     void GetNextFrame () {
         cvGrabFrame (capture);
         currentFrame = cvRetrieveFrame (capture);
+        //cvCvtColor (currentFrame, currentFrame, CV_BGR2GRAY);
     }
     
     
@@ -55,17 +47,32 @@ public:
      * -------------------
      * this function will have the Uke object locate the Uke.
      */
-    void LocateUke () {
-        return;
+    int LocateUke () {
+        return 0;
     }
     
     /* Function: DetermineFingering
      * ----------------------------
      * this function will track the uke and determine the fingering...
      */
-    void DetermineFingering () {
-        return;
+    int DetermineFingering () {
+        return 0;
     }
+    
+    
+    /* Function: constructor
+     * ---------------------
+     * sets up communication with the webcam;
+     */
+    Virtualele (char * newMainDisplayName, IplImage *fullResTemplate)
+    {
+        capture = cvCreateCameraCapture (-1);
+        GetNextFrame ();
+        mainDisplayName = newMainDisplayName;
+        
+        uke = new Uke (currentFrame, fullResTemplate);
+    }
+    
     
     
     /* Function: destructor
