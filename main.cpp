@@ -1,31 +1,32 @@
+/* for opencv */
+#include <opencv2/opencv.hpp>
+#include <opencv2/highgui/highgui.hpp>
+
 #include <iostream>
 #include <stdlib.h>
 #include <stdio.h>
 
-/* for opencv */
-#include <opencv2/opencv.hpp>
-#include <opencv2/highgui/highgui.hpp>
+#include "virtualele.h"
 
 using namespace std;
 
 
 int main () {
+    
+    /*windows to display*/
+    cvNamedWindow ("MAIN_DISPLAY");
+    cvResizeWindow ("MAIN_DISPLAY", 640, 640);
 
+    Virtualele virtualele ("MAIN_DISPLAY");
 
-  CvCapture * capture = cvCreateCameraCapture (-1);
-  cvGrabFrame (capture);
-  IplImage *img = cvRetrieveFrame (capture);
-
-
-  cvNamedWindow ("DISPLAY");
-  cvResizeWindow ("DISPLAY", 640, 640);
-
-  cvShowImage ("DISPLAY", img);
-
-  int key = 0;
-  while (key != 'q') {
-    key = cvWaitKey(30);
-  }
+    
+    /*### Delay Until End ###*/
+    int key = 0;
+    while (key != 'q') {
+        virtualele.GetNextFrame ();
+        virtualele.DisplayFrame ();
+        key = cvWaitKey(30);
+    }
 
   return 0;
 }
