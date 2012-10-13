@@ -9,6 +9,10 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
+#define LARGEST_RES_WIDTH 176
+#define LARGEST_RES_HEIGHT 164
+#define SMALLEST_RES_WIDTH 54
+#define RES_STEP 3
 
 
 class Uke {
@@ -97,6 +101,24 @@ public:
     }
     
     
+    /* Function: InitBoundaryMarkerImages
+     * ---------------------------
+     * this function will initialize the array 'BoundaryMarkerImages' with
+     * different resampled resultions; it will also set
+     * the 'numOfBoundaryMarkerImages
+     */
+    void InitBoundaryMarkerImages (IplImage *fullSizeTemplate) {
+        int numOfBoundaryMarkerImages = (LARGEST_RES_WIDTH - SMALLEST_RES_WIDTH) / 3;
+        BoundaryMarkerImages = new IplImage[numOfBoundaryMarkerImages];
+        for (int i = LARGEST_RES_WIDTH; i > SMALLEST_RES_WIDTH; i = i - 3) {
+            int height = i * LARGEST_RES_HEIGHT / LARGEST_RES_WIDTH;
+             BoundaryMarkerImages[i] = cvCreateImage(CvSize(i, height), IPL_DEPTH_8U, 1);
+            cvResize(fullSizeTemplate,  BoundaryMarkerImages[i], 1);
+        }
+        
+    }
+    
+    
     /* Function: constructor
      * ---------------------
      * the constructor takes in an IplImage containing the full-sized template; it will 
@@ -106,8 +128,15 @@ public:
      
      
     Uke (IplImage *fullSizeTemplate) {
-        BoundaryMarkerImage = cvCopyImage (bm);
+        InitBoundaryMarkerImages(fullSizeTemplate);
         
+    }
+    
+    ~Uke () {
+        for (int i = 0; i < numOfBoundaryMarkerImages; i++) {
+            delete BoundaryMarkerImages[i];
+        }
+        delete BoundaryMarkerImages;
     }
     
     
