@@ -21,6 +21,12 @@ using namespace std;
 using namespace cv;
 
 
+#define F_CHORD 1 //3 //2,3 //1,2,3
+#define C_CHORD 2 //0 //1,2 //0,1,2
+#define G_CHORD 3 //1 //1,3 //0,1,3
+#define A_MINOR 4 //2 //0,2 //0,2,3
+#define E_MINOR 5 //0,1 //0,3 //0,1,2,3
+
 
 
 class Uke {
@@ -41,7 +47,12 @@ private:
     Key *keys [NUM_OF_KEYS];
     Body body;
     
+    /*map from fingers to chords*/
+    map<int*, int> keysToChords;
+    
+    
 public:
+    
     
     bool isCalibrated;
     
@@ -56,13 +67,52 @@ public:
         boundaryMarker_black.Set (blackTemplate, blackCorner);
     }
     
-    /*
-     *
-     */
-    bool checkForStrum(IplImage *currentFrame){
-        return false;
+    //sets up the map from keys to chords
+    void InitKeyChordMap(){
+        int arr [4] = {0,0,0,1};
+        keysToChords[arr] = F_CHORD;
+        int arr2 [4] = {0,0,1,1};
+        keysToChords[arr2] = F_CHORD;
+        int arr3 [4] = {0,1,1,1};
+        keysToChords[arr3] = F_CHORD;
+        int arr4 [4] = {1,0,0,0};
+        keysToChords[arr4] = C_CHORD;
+        int arr5 [4] = {0,1,1,0};
+        keysToChords[arr5] = C_CHORD;
+        int arr6 [4] = {1,1,1,0};
+        keysToChords[arr6] = C_CHORD;
+        int arr7 [4] = {0,1,0,0};
+        keysToChords[arr7] = G_CHORD;
+        int arr8 [4] = {0,1,0,1};
+        keysToChords[arr8] = G_CHORD;
+        int arr9 [4] = {1,1,0,1};
+        keysToChords[arr9] = G_CHORD;
+        int arr10 [4] = {0,0,1,0};
+        keysToChords[arr10] = A_MINOR;
+        int arr11 [4] = {1,0,1,0};
+        keysToChords[arr11] = A_MINOR;
+        int arr12 [4] = {1,0,1,1};
+        keysToChords[arr12] = A_MINOR;
+        int arr13 [4] = {0,0,1,0};
+        keysToChords[arr13] = E_MINOR;
+        int arr14 [4] = {1,0,1,0};
+        keysToChords[arr14] = E_MINOR;
+        int arr15 [4] = {1,0,1,1};
+        keysToChords[arr15] = E_MINOR;
     }
     
+    /*
+     * returns -1 if there is no chord (play no sound sample), returns the constant mapping to the chord otherwise.*/
+     */
+    int GetCurrentChord () {
+        if(body.isActive()){
+            return C_CHORD;
+        }
+        else {
+            return -1;
+        }
+        return 0
+    }
     
     /* Function: UpdateBoundaryMarkers
      * -------------------------------
@@ -348,6 +398,7 @@ public:
         numOfMatchMatrices = 0;
         InitBoundaryMarkerImages(fullSizeTemplate_white, fullSizeTemplate_black);
         InitMatchMatrices (currentFrame);
+        InitKeyChordMap();
         
         keys[0] = new Key (KEY1_RATIO, KEY_RADIUS);
         keys[1] = new Key (KEY2_RATIO, KEY_RADIUS);

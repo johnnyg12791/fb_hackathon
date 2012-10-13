@@ -48,11 +48,10 @@ int main () {
             if (currentlyTracking) {
                 virtualele.TrackUke ();
                 virtualele.DetermineFingering ();
-                /*
-                if(checkForStrum()){
-                    makeSound();
+                int currentChord = virtualele.GetCurrentChord ();
+                if (currentChord != -1) {
+                    virtualele.PlayNote (currentChord);
                 }
-                */
             }
         }
         
