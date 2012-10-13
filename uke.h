@@ -127,7 +127,6 @@ public:
         
         for (int i=0;i<currentMatchMatrix->GetRows();i++) {
             for (int j=0;j<currentMatchMatrix->GetCols();j++) {
-                
                 currentMatchMatrix->SetEntry(i, j, GetSummedSquaredDifference (currentFrame, currentTemplate, i, j));
                 
             }
@@ -135,6 +134,7 @@ public:
         
         
     }
+
     
     
     /* Function: InitMatchMatrices
