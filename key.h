@@ -8,11 +8,11 @@
 #include <stdio.h>
 
 #define NUM_OF_KEYS 4
-#define KEY1_RATIO 36
-#define KEY2_RATIO 50
-#define KEY3_RATIO 64
-#define KEY4_RATIO 74
-#define KEY_RADIUS 13
+#define KEY1_RATIO 24
+#define KEY2_RATIO 36
+#define KEY3_RATIO 48
+#define KEY4_RATIO 60
+#define KEY_RADIUS 12
 
 using namespace std;
 using namespace cv;

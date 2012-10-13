@@ -53,6 +53,12 @@ public:
         boundaryMarker_black.Set (blackTemplate, blackCorner);
     }
     
+    /*
+     *
+     */
+    bool checkForStrum(IplImage *currentFrame){
+        
+    }
     
     
     /* Function: UpdateBoundaryMarkers
@@ -93,13 +99,14 @@ public:
                         8,
                         0 );
         
+        
         line (          testImageMat,
                         boundaryMarker_black.center,
                         boundaryMarker_white.center,
                         Scalar (255, 0, 0, 0),
                         3, 8, 0);
         
-        for (int i=0;i<3;i++) {
+        for (int i=0;i<NUM_OF_KEYS;i++) {
             
             circle (    testImageMat,
                         keys[i]->location,
