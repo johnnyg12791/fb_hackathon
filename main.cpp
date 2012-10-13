@@ -48,6 +48,11 @@ int main () {
             if (currentlyTracking) {
                 virtualele.TrackUke ();
                 virtualele.DetermineFingering ();
+                /*
+                if(checkForStrum()){
+                    makeSound();
+                }
+                */
             }
         }
         
