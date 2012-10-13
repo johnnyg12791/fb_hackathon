@@ -15,6 +15,7 @@
 
 #define SMALLEST_RES_WIDTH 92
 #define RES_STEP 6
+#define HEIGHT_OF_LINE 4 //This is actually the center - height/HEIGHT_OF_LINE, so 4 means its 3/4 up the screen, -4 means 1/4 up the screen
 
 using namespace std;
 using namespace cv;
@@ -59,7 +60,7 @@ public:
      *
      */
     bool checkForStrum(IplImage *currentFrame){
-        
+        return false;
     }
     
     
@@ -102,6 +103,10 @@ public:
                         0 );
         
         
+        boundaryMarker_black.center.y -= boundaryMarker_black.height/HEIGHT_OF_LINE;
+        boundaryMarker_white.center.y -= boundaryMarker_white.height/HEIGHT_OF_LINE;
+
+        
         line (          testImageMat,
                         boundaryMarker_black.center,
                         boundaryMarker_white.center,
@@ -109,7 +114,7 @@ public:
                         3, 8, 0);
         
         for (int i=0;i<NUM_OF_KEYS;i++) {
-            
+            keys[i]->location.y -= boundaryMarker_black.height/HEIGHT_OF_LINE;
             circle (    testImageMat,
                         keys[i]->location,
                         keys[i]->radius,
