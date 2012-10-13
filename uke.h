@@ -106,13 +106,14 @@ public:
         IplImage *resultImage = cvCloneImage (testImage);
         
         CvRect result = cvRect (matchMatrices[0]->GetGlobalMax().x, matchMatrices[0]->GetGlobalMax().y, BoundaryMarkerImages[0]->width, BoundaryMarkerImages[0]->height);
-        Rectangle (resultImage, cvPoint(result.x, result.y), cvPoint(result.x + result.width, result.y + result.height), Scalar( 0, 0, 0), 3, 8);
+        cvRectangle (resultImage, cvPoint(result.x, result.y), cvPoint(result.x + result.width, result.y + result.height), cvScalar( 0, 0, 0), 3, 8);
         
         cvShowImage( "MAIN_DISPLAY", resultImage);
         int key = 0;
         while (key != 'q') {
             key = cvWaitKey (30);
         }
+        return resultImage;
         
     }
             
@@ -126,21 +127,35 @@ public:
      */
 
     int GetSummedSquaredDifference (IplImage *currentFrame, IplImage *currentTemplate, int x, int y) {
-        
+        cout << "Started GetSummedSquaredDifference" << endl;
         int totalSum = 0;
         
-        char *imagePosition = currentFrame->imageData + x*currentFrame->widthStep + y;
-        char *templatePosition = currentTemplate->imageData;
+        cvShowImage( "MAIN_DISPLAY", currentFrame);
+        int key = 0;
+        while (key != 'q') {
+            key = cvWaitKey (30);
+        }
         
+        cvShowImage( "MAIN_DISPLAY", currentTemplate);
+        
+        key = 0;
+        while (key != 'q') {
+            key = cvWaitKey (30);
+        }
+        
+        char *imagePosition = currentFrame->imageData + x *currentFrame->widthStep + y;
+        char *templatePosition = currentTemplate->imageData;
+        cout << "CurrentTemplate->width: " << currentTemplate->width << ", height: " << "CurrentTemplate->height: " << currentTemplate->height << endl;
         for (int i=0;i<currentTemplate->width;i++) {
             for (int j=0;j<currentTemplate->height;j++) {
                 
                 totalSum += pow( (float) (*(imagePosition + j) - *(templatePosition + j)) , 2);
+                cout << "totalSum = " << totalSum << endl;
             }
             imagePosition += currentFrame->widthStep;
             templatePosition += currentTemplate->widthStep;
         }
-   
+        cout << "Finished GetSummedSquaredDifference" << endl;
         return totalSum;
     }
     
@@ -151,16 +166,33 @@ public:
      * fill the appropriate member of 'matchMatrices'
      */
     void GenerateMatchMatrix (IplImage * currentFrame, int index) {
+        cout << "Started generating MatchMatrix" << endl;
+
+        
+
+        
         MatchMatrix *currentMatchMatrix = matchMatrices [index];
         IplImage    *currentTemplate = BoundaryMarkerImages [index];
         
+        cvShowImage( "MAIN_DISPLAY", currentTemplate);
+        int key = 0;
+        while (key != 'q') {
+            key = cvWaitKey (30);
+        }
+        
+        cout << "worked" << endl;
+
+
         for (int i=0;i<currentMatchMatrix->GetRows();i++) {
             for (int j=0;j<currentMatchMatrix->GetCols();j++) {
+                cout << "i: " << i << ", j: " << j << endl;
+
                 currentMatchMatrix->SetEntry(i, j, GetSummedSquaredDifference (currentFrame, currentTemplate, i, j));
                 
             }
         }
-        
+        cout << "Finished generating MatchMatrix" << endl;
+
         
     }
 
@@ -194,12 +226,19 @@ public:
     void InitBoundaryMarkerImages (IplImage *fullSizeTemplate) {
         
         int largestResWidth = fullSizeTemplate->width;
-        int numOfBoundaryMarkerImages = (largestResWidth - SMALLEST_RES_WIDTH) / 3;
+        cout << "largestResWidth: " << largestResWidth << endl;
+        int numOfBoundaryMarkerImages = (largestResWidth - SMALLEST_RES_WIDTH + 1) / 3;
         BoundaryMarkerImages = new IplImage *[numOfBoundaryMarkerImages];
         for (int i = largestResWidth; i > SMALLEST_RES_WIDTH; i = i - RES_STEP) {
+            cout << "i: " << i << endl;
             BoundaryMarkerImages[i] = cvCreateImage(cvSize(i, i), IPL_DEPTH_8U, 1);
             cvResize(fullSizeTemplate,  BoundaryMarkerImages[i], 1);
-            
+            cvShowImage( "MAIN_DISPLAY", BoundaryMarkerImages[i]);
+            int key = 0;
+            while (key != 'q') {
+                key = cvWaitKey (30);
+            }
+
             cout << i << "th boundary image: width, height = " << BoundaryMarkerImages[i]->width << ", " << BoundaryMarkerImages[i]->height << "\n";
         }
      
