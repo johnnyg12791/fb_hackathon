@@ -16,11 +16,13 @@ private:
     /*top and bottom boundarymarkers*/
     CvRect BoundaryMarker_T, BoundaryMarker_B;
     
-    IplImage *BoundaryMarkerImage;
+    IplImage **BoundaryMarkerImages;
+    
+    int numOfBoundaryMarkerImages;
     
     
     /*the match matrices*/
-    CvMat *matchMatrices;
+    CvMat **matchMatrices;
     int numbOfMatchMatrices;
     
 public:
@@ -70,6 +72,7 @@ public:
      
     Uke (IplImage *fullSizeTemplate) {
         BoundaryMarkerImage = cvCopyImage (bm);
+        
     }
     
     
