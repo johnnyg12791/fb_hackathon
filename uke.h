@@ -7,6 +7,7 @@
 #include <math.h>
 #include "boundaryMarker.h"
 #include "key.h"
+#include "body.h"
 
 /*for opencv*/
 #include <opencv2/opencv.hpp>
@@ -44,6 +45,7 @@ private:
     
     /*the keys*/
     Key *keys [NUM_OF_KEYS];
+    Body body;
     
     /*map from fingers to chords*/
     map<int*, int> keysToChords;
@@ -117,12 +119,13 @@ public:
      * given the stats from FindBoundaryMarkers, this function will update the boundary markers appropriately.
      * this function should be used during TRACKING, not during detection.
      */
-    void UpdateBoundaryMarkers (Point white_tl, Point black_tl) {
+    void UpdateBoundaryMarkers (IplImage * currentFrame, Point white_tl, Point black_tl) {
         boundaryMarker_white.Update (white_tl);
         boundaryMarker_black.Update (black_tl);
         for (int i=0;i<NUM_OF_KEYS;i++) {
             keys[i]->Update (boundaryMarker_white.center, boundaryMarker_black.center);
         }
+        body.UpdateLocation (currentFrame, boundaryMarker_white.center, boundaryMarker_black.center);
         
     }
     
@@ -170,6 +173,12 @@ public:
                         2, 8, 0);
             
         }
+        
+        rectangle (     testImageMat,
+                        Point (body.boundingBox.x, body.boundingBox.y),
+                        Point (body.boundingBox.x + body.boundingBox.width, body.boundingBox.y + body.boundingBox.height),
+                        Scalar (0, 255, 0, 0),
+                   3, 8, 0);
         
         IplImage newImage = testImageMat;
         cvShowImage("MAIN_DISPLAY", &newImage);
@@ -220,6 +229,8 @@ public:
         
         SetBoundaryMarkers (    BoundaryMarkerImages_White[bestMatchResolution_white], bestMatch_white, 
                                 BoundaryMarkerImages_Black[bestMatchResolution_black], bestMatch_black);
+        
+        body.init (currentFrame, boundaryMarker_white.center, boundaryMarker_black.center, boundaryMarker_white.width);
     }
     
     
@@ -249,7 +260,7 @@ public:
         newLocation_black.x = minLoc_black.x + boundaryMarker_black.scanRegion.x;
         newLocation_black.y = minLoc_black.y + boundaryMarker_black.scanRegion.y;
         
-        UpdateBoundaryMarkers (newLocation_white, newLocation_black);
+        UpdateBoundaryMarkers (currentFrame, newLocation_white, newLocation_black);
         
         cvResetImageROI (currentFrame);
     }
