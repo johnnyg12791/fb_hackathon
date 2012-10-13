@@ -19,6 +19,10 @@ private:
     IplImage *BoundaryMarkerImage;
     
     
+    /*the match matrices*/
+    CvMat *matchMatrices;
+    int numbOfMatchMatrices;
+    
 public:
     
     /* Function: FindBoundaryMarkers
@@ -28,14 +32,43 @@ public:
     void FindBoundaryMarkers (IplImage *currentFrame) {
     
         for (int i=0;i<NUM_OF_TEMPLATES;i++) {
-            GenerateTemplateMatrix (currentFrame,)
+            GenerateMatchMatrix (currentFrame, i)
         }
         
         
     }
     
+    /* Function: GenerateMatchMatrix 
+     * -----------------------------
+     * given the current frame and the 'resolution index' of the match template to 
+     * use, this function will scan that match template over the entire image and 
+     * fill the appropriate member of 'matchMatrices'
+     */
+    void GenerateMatchMatrix () {
+        
+    }
     
-    Uke (IplImage *bm) {
+    
+    /* Function: InitMatchMatrices
+     * ---------------------------
+     * this function will initialize the array 'matchMatrices' so that it contains 
+     * the appropriate *number* and *resolutions* of match matrices; it will also set 
+     * the 'numOfMatchMatrices
+     */
+    void InitMatchMatrices () {
+        
+    }
+    
+    
+    /* Function: constructor
+     * ---------------------
+     * the constructor takes in an IplImage containing the full-sized template; it will 
+     * then generate an array containing all of the different resolutions of this template 
+     * and, in addition, initialize the array of 'matchmatrices'
+     */
+     
+     
+    Uke (IplImage *fullSizeTemplate) {
         BoundaryMarkerImage = cvCopyImage (bm);
     }
     
