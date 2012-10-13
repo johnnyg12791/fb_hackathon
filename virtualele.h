@@ -45,13 +45,6 @@ public:
     
     
     
-    int scan_test (char * testImageName) {
-        IplImage *testImage = cvLoadImage (testImageName, CV_LOAD_IMAGE_GRAYSCALE);
-        IplImage * testResult = uke->scan_test (testImage, fullResTemplate);
-        
-    }
-    
-    
     /* Function: LocateUke
      * -------------------
      * this function will have the Uke object locate the Uke. returns 1 when it works, 0 otherwise.
@@ -59,8 +52,14 @@ public:
     int LocateUke () {
         
         uke->FindBoundaryMarkers (currentFrame);
+        uke->DrawBoundaryMarkers (currentFrame);
         return 1;
         
+    }
+    int LocateUke (IplImage *testImage) {
+        uke->FindBoundaryMarkers (testImage);
+        uke->DrawBoundaryMarkers (testImage);
+        return 1;
     }
     
     /* Function: DetermineFingering
@@ -83,6 +82,7 @@ public:
         mainDisplayName = newMainDisplayName;
         
         uke = new Uke (currentFrame, fullResTemplate);
+        cout << "# # # INITIALIZATION COMPLETE # # #\n";
     }
     
     
